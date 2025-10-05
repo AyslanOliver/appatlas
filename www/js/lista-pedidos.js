@@ -31,12 +31,18 @@ async function carregarPedidos() {
             // Definir classe de cor baseada no status
             tr.className = getStatusClass(pedido.status);
 
+        const primeiroItem = pedido.itens && pedido.itens.length > 0 ? pedido.itens[0] : {};
+        const descricaoItem = primeiroItem.nome || 
+                             (primeiroItem.tamanho && primeiroItem.sabores ? 
+                              `${primeiroItem.tamanho} - ${primeiroItem.sabores.join(' / ')}` : 
+                              'Item não especificado');
+
         tr.innerHTML = `
-            <td>#${index + 1}</td>
+            <td>#${pedido._id ? pedido._id.slice(-6) : index + 1}</td>
             <td>${pedido.cliente.nome}</td>
-            <td>${pedido.pizza.tamanho} - ${pedido.pizza.sabor1}${pedido.pizza.sabor2 ? ' / ' + pedido.pizza.sabor2 : ''}</td>
+            <td>${descricaoItem}</td>
             <td>
-                <select class="form-control status-select" onchange="atualizarStatus(${index}, this.value)">
+                <select class="form-control status-select" onchange="atualizarStatus('${pedido._id}', this.value)">
                     <option value="pendente" ${pedido.status === 'pendente' ? 'selected' : ''}>Pendente</option>
                     <option value="preparo" ${pedido.status === 'preparo' ? 'selected' : ''}>Em Preparo</option>
                     <option value="entrega" ${pedido.status === 'entrega' ? 'selected' : ''}>Saiu para Entrega</option>
@@ -45,7 +51,7 @@ async function carregarPedidos() {
             </td>
             <td>${formatarData(pedido.dataPedido)}</td>
             <td>
-                <button class="btn btn-primary btn-sm" onclick="mostrarDetalhesPedido(${index})">
+                <button class="btn btn-primary btn-sm" onclick="mostrarDetalhesPedido('${pedido._id}')">
                     <i class="fas fa-eye"></i>
                 </button>
             </td>

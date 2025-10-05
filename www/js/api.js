@@ -74,11 +74,20 @@ export async function deletarProduto(tipo, id) {
 
 export async function getPedidos() {
     try {
-        const response = await fetch(`${API_URL}/api/pedidos`);
-        if (!response.ok) throw new Error('Erro ao buscar pedidos');
-        return await response.json();
+        console.log('Fazendo requisição para:', `${API_URL}/api/pedidos`);
+        const response = await fetch(`${API_URL}/api/pedidos`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        console.log('Response status:', response.status);
+        if (!response.ok) throw new Error(`Erro ao buscar pedidos: ${response.status}`);
+        const data = await response.json();
+        console.log('Dados recebidos:', data);
+        return data;
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('Erro completo:', error);
         throw error;
     }
 }
