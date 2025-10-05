@@ -1,0 +1,24 @@
+{
+  "name": "pizzaria-api",
+  "version": "1.0.0",
+  "description": "API for Pizzaria App",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^5.1.0",
+    "mongodb": "^5.0.0",
+    "mongoose": "^7.8.7"
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "devDependencies": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
