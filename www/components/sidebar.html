@@ -1,43 +1,95 @@
-<!-- Sidebar fixo padrão para todas as páginas -->
+<!-- Sidebar -->
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
         <div class="sidebar-brand-icon rotate-n-15">
             <i class="fas fa-pizza-slice"></i>
         </div>
-        <div class="sidebar-brand-text mx-3">PIZZARIA ADMIN</div>
+        <div class="sidebar-brand-text mx-3">Pizzaria Admin</div>
     </a>
+
+    <!-- Divider -->
     <hr class="sidebar-divider my-0">
-    <!-- Dashboard -->
+
+    <!-- Nav Item - Dashboard -->
     <li class="nav-item">
         <a class="nav-link" href="index.html">
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </a>
     </li>
+
+    <!-- Divider -->
     <hr class="sidebar-divider">
-    <!-- Produtos -->
+
+    <!-- Heading -->
+    <div class="sidebar-heading">
+        Gerenciamento
+    </div>
+
+    <!-- Nav Item - Produtos Collapse Menu -->
     <li class="nav-item">
-        <a class="nav-link bg-warning text-dark font-weight-bold" href="produtos.html">
-            <i class="fas fa-fw fa-box"></i>
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseProducts"
+            aria-expanded="true" aria-controls="collapseProducts">
+            <i class="fas fa-fw fa-utensils"></i>
             <span>Produtos</span>
         </a>
+        <div id="collapseProducts" class="collapse" aria-labelledby="headingProducts" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Categorias:</h6>
+                <a class="collapse-item" href="produtos.html" onclick="mostrarCategoria('pizza')">Pizzas</a>
+                <a class="collapse-item" href="produtos.html" onclick="mostrarCategoria('lanche')">Lanches</a>
+                <a class="collapse-item" href="produtos.html" onclick="mostrarCategoria('salgado')">Salgados</a>
+                <a class="collapse-item" href="produtos.html" onclick="mostrarCategoria('bebida')">Bebidas</a>
+            </div>
+        </div>
     </li>
-    <!-- Pedidos -->
-    <div class="sidebar-heading">PEDIDOS</div>
+
+    <!-- Nav Item - Pedidos -->
+    <li class="nav-item">
+        <a class="nav-link" href="lista-pedidos.html">
+            <i class="fas fa-fw fa-clipboard-list"></i>
+            <span>Pedidos</span>
+        </a>
+    </li>
+
+    <!-- Nav Item - Novo Pedido -->
     <li class="nav-item">
         <a class="nav-link" href="novo-pedido.html">
-            <i class="fas fa-plus"></i>
+            <i class="fas fa-fw fa-plus-circle"></i>
             <span>Novo Pedido</span>
         </a>
     </li>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider">
+
+    <!-- Heading -->
+    <div class="sidebar-heading">
+        Relatórios
+    </div>
+
+    <!-- Nav Item - Relatórios -->
     <li class="nav-item">
-        <a class="nav-link" href="lista-pedidos.html">
-            <i class="fas fa-list"></i>
-            <span>Lista de Pedidos</span>
+        <a class="nav-link" href="#" data-toggle="collapse" data-target="#collapseReports"
+            aria-expanded="true" aria-controls="collapseReports">
+            <i class="fas fa-fw fa-chart-area"></i>
+            <span>Relatórios</span>
         </a>
+        <div id="collapseReports" class="collapse" aria-labelledby="headingReports" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Tipos:</h6>
+                <a class="collapse-item" href="#">Vendas</a>
+                <a class="collapse-item" href="#">Produtos</a>
+                <a class="collapse-item" href="#">Clientes</a>
+            </div>
+        </div>
     </li>
+
+    <!-- Divider -->
     <hr class="sidebar-divider d-none d-md-block">
+
+    <!-- Sidebar Toggler (Sidebar) -->
     <div class="text-center d-none d-md-inline">
         <button class="rounded-circle border-0" id="sidebarToggle"></button>
     </div>

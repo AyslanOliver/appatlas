@@ -198,23 +198,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
+    <script src="js/sidebar-loader.js"></script>
     <script type="module" src="js/produtos.js"></script>
     <script>
-        // Carregar sidebar fixo com logs para depuração
-        fetch('components/sidebar.html')
-            .then(res => {
-                if (!res.ok) {
-                    console.error('Erro ao carregar sidebar.html:', res.status, res.statusText);
-                    return '';
-                }
-                return res.text();
-            })
-            .then(html => {
-                document.getElementById('sidebar-container').innerHTML = html;
-                console.log('Sidebar carregado com sucesso.');
-            })
-            .catch(err => console.error('Erro ao buscar sidebar.html:', err));
-
         window.scrollToTop = function() {
             document.body.scrollTop = 0;
             document.documentElement.scrollTop = 0;

@@ -1,33 +1,53 @@
-import { ObjectId } from 'mongodb';
-import { getCollection } from '../lib/mongodb.js';
+import mongoose from 'mongoose';
+
+const ProdutoSchema = new mongoose.Schema({
+    tipo: {
+        type: String,
+        required: true,
+        enum: ['pizza', 'lanche', 'salgado', 'bebida']
+    },
+    nome: {
+        type: String,
+        required: true
+    },
+    descricao: String,
+    preco: {
+        type: Number,
+        required: true
+    },
+    disponivel: {
+        type: Boolean,
+        default: true
+    },
+    categoria: String,
+    opcoes: {
+        tamanhos: [String],
+        sabores: [String],
+        ingredientes: [String]
+    }
+}, {
+    timestamps: true
+});
+
+const Produto = mongoose.models.Produto || mongoose.model('Produto', ProdutoSchema);
 
 export async function getAllProdutos() {
-  const collection = await getCollection('produtos');
-  return collection.find({}).toArray();
+    return await Produto.find({});
 }
 
 export async function getProdutoById(id) {
-  const collection = await getCollection('produtos');
-  return collection.findOne({ _id: new ObjectId(id) });
+    return await Produto.findById(id);
 }
 
 export async function createProduto(produto) {
-  const collection = await getCollection('produtos');
-  const result = await collection.insertOne(produto);
-  return { ...produto, _id: result.insertedId };
+    const novoProduto = new Produto(produto);
+    return await novoProduto.save();
 }
 
 export async function updateProduto(id, produto) {
-  const collection = await getCollection('produtos');
-  await collection.updateOne(
-    { _id: new ObjectId(id) },
-    { $set: produto }
-  );
-  return { ...produto, _id: id };
+    return await Produto.findByIdAndUpdate(id, produto, { new: true });
 }
 
 export async function deleteProduto(id) {
-  const collection = await getCollection('produtos');
-  await collection.deleteOne({ _id: new ObjectId(id) });
-  return { _id: id };
+    return await Produto.findByIdAndDelete(id);
 }
