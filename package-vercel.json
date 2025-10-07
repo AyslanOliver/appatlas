@@ -1,0 +1,21 @@
+{
+  "name": "pizzaria-api-vercel",
+  "version": "1.0.0",
+  "description": "API da Pizzaria para Vercel com integração MongoDB e impressora POS58",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "deploy": "vercel --prod",
+    "deploy-script": "node deploy.js"
+  },
+  "dependencies": {
+    "mongodb": "^6.3.0"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

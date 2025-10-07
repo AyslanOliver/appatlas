@@ -1,297 +1,316 @@
+// Produtos.js - Versão atualizada em 2024
 // Importar funções da API
 import { getProdutos, criarProduto, atualizarProduto, deletarProduto } from './api.js';
 
-// Armazenamento local dos dados
+// Variáveis globais
 let produtos = [];
-let tamanhos = [];
-let sabores = [];
-let categoriaAtual = 'pizza';
+let categoriaAtual = 'pasteis';
 
-// Carregar dados ao iniciar a página
-document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        await carregarDados();
-    } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        alert('Erro ao carregar dados. Por favor, recarregue a página.');
-    }
-});
-
-// Exportar funções para o escopo global
-window.mostrarCategoria = function(categoria) {
-    categoriaAtual = categoria;
-    filtrarProdutosPorCategoria(categoria);
-    document.querySelectorAll('.collapse-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    document.querySelector(`[onclick="mostrarCategoria('${categoria}')"]`).classList.add('active');
+// Mapeamento de categorias para nomes amigáveis
+const nomesCategorias = {
+    'pasteis': 'Pastéis',
+    'salgados': 'Salgados',
+    'bolo': 'Bolos',
+    'bebidas': 'Bebidas',
+    'pizzas': 'Pizzas',
+    'lanches_na_chapa': 'Lanches na Chapa'
 };
 
-// Função para carregar dados da API
-async function carregarDados() {
-    produtos = await getProdutos();
-    filtrarProdutosPorCategoria(categoriaAtual);
+// Aguardar o DOM estar pronto
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM carregado');
+    inicializar();
+});
+
+// Função de inicialização
+async function inicializar() {
+    try {
+        console.log('Iniciando aplicação...');
+        
+        // Carregar dados
+        await carregarDados();
+        console.log('Dados carregados:', produtos.length, 'produtos');
+        
+        // Mostrar categoria inicial
+        exibirProdutosPorCategoria('pasteis');
+        
+        // Configurar event listeners
+        configurarEventListeners();
+        
+        console.log('Aplicação inicializada com sucesso');
+    } catch (error) {
+        console.error('Erro na inicialização:', error);
+        mostrarAlerta('Erro ao carregar a página. Tente recarregar.', 'danger');
+    }
 }
 
-// Função para filtrar produtos por categoria
-window.mostrarCategoria = function(categoria) {
-    categoriaAtual = categoria;
-    filtrarProdutosPorCategoria(categoria);
-    document.querySelectorAll('.collapse-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    document.querySelector(`[onclick="mostrarCategoria('${categoria}')"]`).classList.add('active');
-}
-
-function filtrarProdutosPorCategoria(categoria) {
-    const produtosFiltrados = produtos.filter(p => p.categoria === categoria);
-    
-    // Atualizar o conteúdo da página com base na categoria
-    const containerProdutos = document.querySelector('.container-fluid');
-    
-    if (categoria === 'pizza') {
-        tamanhos = produtos.filter(p => p.tipo === 'tamanho') || [];
-        sabores = produtos.filter(p => p.tipo === 'sabor') || [];
-        
-        // Mostrar tabelas de tamanhos e sabores
-        document.getElementById('tabelaTamanhos').closest('.card').style.display = 'block';
-        document.getElementById('tabelaSabores').closest('.card').style.display = 'block';
-        
-        atualizarTabelaTamanhos();
-        atualizarTabelaSabores();
+// Configurar event listeners
+function configurarEventListeners() {
+    const form = document.getElementById('formProduto');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            salvarProduto();
+        });
+        console.log('Event listener do formulário configurado');
     } else {
-        // Esconder tabelas de tamanhos e sabores
-        document.getElementById('tabelaTamanhos').closest('.card').style.display = 'none';
-        document.getElementById('tabelaSabores').closest('.card').style.display = 'none';
-        
-        // Criar visualização para outros tipos de produtos
-        const html = `
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">${categoria.charAt(0).toUpperCase() + categoria.slice(1)}s</h6>
-                    <button class="btn btn-primary btn-sm" onclick="abrirModalProduto('${categoria}')">
-                        <i class="fas fa-plus"></i> Novo ${categoria.charAt(0).toUpperCase() + categoria.slice(1)}
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table" id="tabela${categoria.charAt(0).toUpperCase() + categoria.slice(1)}s">
-                            <thead>
-                                <tr>
-                                    <th>Nome</th>
-                                    <th>Descrição</th>
-                                    <th>Preço (R$)</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${produtosFiltrados.map(produto => `
-                                    <tr>
-                                        <td>${produto.nome}</td>
-                                        <td>${produto.descricao || '-'}</td>
-                                        <td>R$ ${produto.preco.toFixed(2)}</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-info" onclick="editarProduto('${categoria}', '${produto._id}')">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" onclick="excluirProduto('${categoria}', '${produto._id}')">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+        console.warn('Formulário não encontrado');
+    }
+}
+
+// Carregar dados da API
+async function carregarDados() {
+    try {
+        produtos = await getProdutos();
+        console.log('Produtos carregados da API:', produtos);
+    } catch (error) {
+        console.error('Erro ao carregar produtos:', error);
+        produtos = [];
+        throw error;
+    }
+}
+
+// Função global para mostrar produtos por categoria
+window.exibirProdutosPorCategoria = function(categoria) {
+    console.log('Exibindo categoria:', categoria);
+    categoriaAtual = categoria;
+    
+    // Atualizar botões ativos
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Marcar botão ativo
+    const botaoAtivo = document.querySelector(`[onclick*="${categoria}"]`);
+    if (botaoAtivo) {
+        botaoAtivo.classList.add('active');
+    }
+    
+    // Filtrar e renderizar produtos
+    const produtosFiltrados = produtos.filter(p => p.categoria === categoria);
+    renderizarProdutos(produtosFiltrados);
+};
+
+// Renderizar produtos na tela
+function renderizarProdutos(produtosFiltrados) {
+    const container = document.getElementById('containerProdutos');
+    if (!container) {
+        console.error('Container de produtos não encontrado');
+        return;
+    }
+    
+    if (produtosFiltrados.length === 0) {
+        container.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                Nenhum produto encontrado para esta categoria.
             </div>
         `;
-        
-        // Atualizar o conteúdo
-        containerProdutos.innerHTML = html;
+        return;
     }
-}
-
-// Funções para Tamanhos
-function atualizarTabelaTamanhos() {
-    const tbody = document.querySelector('#tabelaTamanhos tbody');
-    tbody.innerHTML = '';
-
-    tamanhos.forEach(tamanho => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${tamanho.nome}</td>
-            <td>${tamanho.descricao}</td>
-            <td>R$ ${tamanho.preco.toFixed(2)}</td>
-            <td>
-                <button class="btn btn-sm btn-info" onclick="editarTamanho('${tamanho._id}')">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="excluirTamanho('${tamanho._id}')">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-window.abrirModalTamanho = function(id = null) {
-    const modal = $('#modalTamanho');
-    const form = document.getElementById('formTamanho');
     
-    if (id) {
-        const tamanho = tamanhos.find(t => t._id === id);
-        if (tamanho) {
-            document.getElementById('tamanhoId').value = tamanho._id;
-            document.getElementById('tamanhoNome').value = tamanho.nome;
-            document.getElementById('tamanhoDescricao').value = tamanho.descricao;
-            document.getElementById('tamanhoPreco').value = tamanho.preco;
-            document.getElementById('modalTamanhoTitulo').textContent = 'Editar Tamanho de Pizza';
-        }
-    } else {
+    const html = `
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    ${nomesCategorias[categoriaAtual] || categoriaAtual}
+                </h6>
+                <button class="btn btn-primary btn-sm" onclick="abrirModalNovoProduto()">
+                    <i class="fas fa-plus"></i> Adicionar Produto
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Descrição</th>
+                                <th>Preço</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${produtosFiltrados.map(produto => `
+                                <tr>
+                                    <td>${produto.nome}</td>
+                                    <td>${produto.descricao || '-'}</td>
+                                    <td>R$ ${produto.preco.toFixed(2)}</td>
+                                    <td>
+                                        <span class="badge badge-${(produto.ativo || produto.disponivel) ? 'success' : 'secondary'}">
+                                            ${(produto.ativo || produto.disponivel) ? 'Ativo' : 'Inativo'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editarProduto('${produto._id}')" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger ml-1" onclick="excluirProduto('${produto._id}')" title="Excluir">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Função global para abrir modal de novo produto
+window.abrirModalNovoProduto = function() {
+    console.log('Abrindo modal para novo produto');
+    
+    // Limpar formulário
+    const form = document.getElementById('formProduto');
+    if (form) {
         form.reset();
-        document.getElementById('tamanhoId').value = '';
-        document.getElementById('modalTamanhoTitulo').textContent = 'Novo Tamanho de Pizza';
     }
     
-    modal.modal('show');
+    // Configurar campos
+    document.getElementById('produtoId').value = '';
+    document.getElementById('produtoCategoria').value = categoriaAtual;
+    
+    // Configurar título
+    const titulo = document.getElementById('modalProdutoTitulo');
+    if (titulo) {
+        titulo.textContent = 'Adicionar Novo Produto';
+    }
+    
+    // Abrir modal
+    $('#modalProduto').modal('show');
 };
 
-window.editarTamanho = function(id) {
-    abrirModalTamanho(id);
+// Função global para editar produto
+window.editarProduto = function(id) {
+    console.log('Editando produto:', id);
+    
+    const produto = produtos.find(p => p._id === id);
+    if (!produto) {
+        mostrarAlerta('Produto não encontrado!', 'danger');
+        return;
+    }
+    
+    // Preencher formulário
+    document.getElementById('produtoId').value = produto._id;
+    document.getElementById('produtoCategoria').value = produto.categoria;
+    document.getElementById('produtoNome').value = produto.nome;
+    document.getElementById('produtoDescricao').value = produto.descricao || '';
+    document.getElementById('produtoPreco').value = produto.preco;
+    document.getElementById('produtoAtivo').checked = produto.ativo;
+    
+    // Configurar título
+    const titulo = document.getElementById('modalProdutoTitulo');
+    if (titulo) {
+        titulo.textContent = 'Editar Produto';
+    }
+    
+    // Abrir modal
+    $('#modalProduto').modal('show');
 };
 
-window.excluirTamanho = async function(id) {
-    if (confirm('Tem certeza que deseja excluir este tamanho?')) {
-        try {
-            await deletarProduto('tamanho', id);
-            await carregarDados();
-            alert('Tamanho excluído com sucesso!');
-        } catch (error) {
-            console.error('Erro ao excluir tamanho:', error);
-            alert('Erro ao excluir tamanho. Por favor, tente novamente.');
-        }
+// Função global para excluir produto
+window.excluirProduto = async function(id) {
+    console.log('Excluindo produto:', id);
+    
+    const produto = produtos.find(p => p._id === id);
+    if (!produto) {
+        mostrarAlerta('Produto não encontrado!', 'danger');
+        return;
+    }
+    
+    if (!confirm(`Tem certeza que deseja excluir "${produto.nome}"?`)) {
+        return;
+    }
+    
+    try {
+        await deletarProduto(produto.categoria, id);
+        mostrarAlerta('Produto excluído com sucesso!', 'success');
+        
+        // Recarregar dados
+        await carregarDados();
+        exibirProdutosPorCategoria(categoriaAtual);
+        
+    } catch (error) {
+        console.error('Erro ao excluir produto:', error);
+        mostrarAlerta('Erro ao excluir produto. Tente novamente.', 'danger');
     }
 };
 
-// Funções para Sabores
-function atualizarTabelaSabores() {
-    const tbody = document.querySelector('#tabelaSabores tbody');
-    tbody.innerHTML = '';
-
-    sabores.forEach(sabor => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${sabor.nome}</td>
-            <td>${sabor.categoria === 'tradicional' ? 'Tradicional' : 'Especial'}</td>
-            <td>${sabor.descricao}</td>
-            <td>${sabor.adicional ? 'R$ ' + sabor.adicional.toFixed(2) : '-'}</td>
-            <td>
-                <button class="btn btn-sm btn-info" onclick="editarSabor('${sabor._id}')">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="excluirSabor('${sabor._id}')">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+// Salvar produto (criar ou editar)
+async function salvarProduto() {
+    console.log('Salvando produto...');
+    
+    const form = document.getElementById('formProduto');
+    const formData = new FormData(form);
+    
+    const produto = {
+        nome: formData.get('produtoNome'),
+        descricao: formData.get('produtoDescricao'),
+        preco: parseFloat(formData.get('produtoPreco')),
+        ativo: formData.get('produtoAtivo') === 'on'
+    };
+    
+    const produtoId = formData.get('produtoId');
+    const categoria = formData.get('produtoCategoria');
+    
+    try {
+        if (produtoId) {
+            // Editar
+            await atualizarProduto(categoria, produtoId, produto);
+            mostrarAlerta('Produto atualizado com sucesso!', 'success');
+        } else {
+            // Criar
+            produto.categoria = categoria;
+            await criarProduto(categoria, produto);
+            mostrarAlerta('Produto criado com sucesso!', 'success');
+        }
+        
+        // Fechar modal e recarregar
+        $('#modalProduto').modal('hide');
+        await carregarDados();
+        exibirProdutosPorCategoria(categoriaAtual);
+        
+    } catch (error) {
+        console.error('Erro ao salvar produto:', error);
+        mostrarAlerta('Erro ao salvar produto. Tente novamente.', 'danger');
+    }
 }
 
-window.abrirModalSabor = function(id = null) {
-    const modal = $('#modalSabor');
-    const form = document.getElementById('formSabor');
-    
-    if (id) {
-        const sabor = sabores.find(s => s._id === id);
-        if (sabor) {
-            document.getElementById('saborId').value = sabor._id;
-            document.getElementById('saborNome').value = sabor.nome;
-            document.getElementById('saborCategoria').value = sabor.categoria;
-            document.getElementById('saborDescricao').value = sabor.descricao;
-            document.getElementById('saborAdicional').value = sabor.adicional || 0;
-            document.getElementById('modalSaborTitulo').textContent = 'Editar Sabor de Pizza';
+// Mostrar alertas
+function mostrarAlerta(mensagem, tipo) {
+    // Remover alertas existentes
+    document.querySelectorAll('.alert').forEach(alert => {
+        if (alert.parentNode) {
+            alert.remove();
         }
-    } else {
-        form.reset();
-        document.getElementById('saborId').value = '';
-        document.getElementById('modalSaborTitulo').textContent = 'Novo Sabor de Pizza';
+    });
+    
+    // Criar novo alerta
+    const alerta = document.createElement('div');
+    alerta.className = `alert alert-${tipo} alert-dismissible fade show`;
+    alerta.innerHTML = `
+        ${mensagem}
+        <button type="button" class="close" data-dismiss="alert">
+            <span>&times;</span>
+        </button>
+    `;
+    
+    // Inserir no container
+    const container = document.querySelector('.container-fluid');
+    if (container && container.firstChild) {
+        container.insertBefore(alerta, container.firstChild);
     }
     
-    modal.modal('show');
-};
-
-window.editarSabor = function(id) {
-    abrirModalSabor(id);
-};
-
-window.excluirSabor = async function(id) {
-    if (confirm('Tem certeza que deseja excluir este sabor?')) {
-        try {
-            await deletarProduto('sabor', id);
-            await carregarDados();
-            alert('Sabor excluído com sucesso!');
-        } catch (error) {
-            console.error('Erro ao excluir sabor:', error);
-            alert('Erro ao excluir sabor. Por favor, tente novamente.');
+    // Auto-remover após 5 segundos
+    setTimeout(() => {
+        if (alerta.parentNode) {
+            alerta.remove();
         }
-    }
-};
-
-// Event Listeners para os formulários
-document.getElementById('formTamanho').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const tamanho = {
-        nome: document.getElementById('tamanhoNome').value,
-        descricao: document.getElementById('tamanhoDescricao').value,
-        preco: parseFloat(document.getElementById('tamanhoPreco').value)
-    };
-
-    const id = document.getElementById('tamanhoId').value;
-
-    try {
-        if (id) {
-            await atualizarProduto('tamanho', id, tamanho);
-        } else {
-            await criarProduto('tamanho', tamanho);
-        }
-        
-        await carregarDados();
-        $('#modalTamanho').modal('hide');
-        alert('Tamanho salvo com sucesso!');
-    } catch (error) {
-        console.error('Erro ao salvar tamanho:', error);
-        alert('Erro ao salvar tamanho. Por favor, tente novamente.');
-    }
-});
-
-document.getElementById('formSabor').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const sabor = {
-        nome: document.getElementById('saborNome').value,
-        categoria: document.getElementById('saborCategoria').value,
-        descricao: document.getElementById('saborDescricao').value,
-        adicional: parseFloat(document.getElementById('saborAdicional').value || 0)
-    };
-
-    const id = document.getElementById('saborId').value;
-
-    try {
-        if (id) {
-            await atualizarProduto('sabor', id, sabor);
-        } else {
-            await criarProduto('sabor', sabor);
-        }
-        
-        await carregarDados();
-        $('#modalSabor').modal('hide');
-        alert('Sabor salvo com sucesso!');
-    } catch (error) {
-        console.error('Erro ao salvar sabor:', error);
-        alert('Erro ao salvar sabor. Por favor, tente novamente.');
-    }
-});
+    }, 5000);
+}

@@ -1,5 +1,9 @@
 // Arquivo para gerenciar as chamadas à API
-const API_URL = 'http://localhost:3000';
+// Configuração da API
+// Detecta automaticamente se está em produção ou desenvolvimento
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:3000' 
+    : window.location.origin;
 
 // Função para testar a conexão com a API
 async function testarConexao() {

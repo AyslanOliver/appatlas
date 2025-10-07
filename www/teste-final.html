@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Final - API</title>
+</head>
+<body>
+    <h1>Teste Final - Carregamento de Pedidos</h1>
+    <button onclick="testarAPI()">Testar API</button>
+    <div id="resultado"></div>
+    <div id="pedidos"></div>
+
+    <script>
+        async function testarAPI() {
+            const resultado = document.getElementById('resultado');
+            const pedidosDiv = document.getElementById('pedidos');
+            
+            try {
+                resultado.innerHTML = 'Testando conexão com API...';
+                
+                const response = await fetch('http://localhost:3000/api/pedidos');
+                resultado.innerHTML = `Status: ${response.status}`;
+                
+                if (response.ok) {
+                    const pedidos = await response.json();
+                    resultado.innerHTML += `<br>Pedidos recebidos: ${pedidos.length}`;
+                    
+                    pedidosDiv.innerHTML = '<h2>Pedidos:</h2>';
+                    pedidos.forEach((pedido, index) => {
+                        pedidosDiv.innerHTML += `
+                            <div style="border: 1px solid #ccc; margin: 10px; padding: 10px;">
+                                <strong>Pedido ${index + 1}:</strong><br>
+                                ID: ${pedido._id}<br>
+                                Cliente: ${pedido.cliente?.nome || 'N/A'}<br>
+                                Status: ${pedido.status}<br>
+                                Data: ${new Date(pedido.dataHora).toLocaleString()}
+                            </div>
+                        `;
+                    });
+                } else {
+                    resultado.innerHTML += '<br>Erro na resposta da API';
+                }
+            } catch (error) {
+                resultado.innerHTML = `Erro: ${error.message}`;
+                console.error('Erro:', error);
+            }
+        }
+        
+        // Testar automaticamente ao carregar
+        window.onload = testarAPI;
+    </script>
+</body>
+</html>

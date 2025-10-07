@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: https://*.cloudflare.com https://*.googleapis.com https://*.gstatic.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.cloudflare.com; font-src 'self' https://*.gstatic.com https://*.cloudflare.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.cloudflare.com; img-src 'self' data: content: https://*.cloudflare.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: ws: http://localhost:* https://*.cloudflare.com https://*.googleapis.com https://*.gstatic.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.cloudflare.com; font-src 'self' https://*.gstatic.com https://*.cloudflare.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://*.cloudflare.com; connect-src 'self' http://localhost:* ws://localhost:* https://*.cloudflare.com; img-src 'self' data: content: https://*.cloudflare.com;">
     <meta name="format-detection" content="telephone=no">
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -81,7 +81,7 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                                 Pedidos Pendentes</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800 pedidos-pendentes">0</div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
@@ -99,7 +99,7 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                                 Em Preparo</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800 pedidos-preparo">0</div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="fas fa-fire fa-2x text-gray-300"></i>
@@ -117,7 +117,7 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                                 Saiu para Entrega</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800 pedidos-entrega">0</div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="fas fa-motorcycle fa-2x text-gray-300"></i>
@@ -135,10 +135,102 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                                 Entregues Hoje</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800 pedidos-entregues">0</div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Segunda linha de estatísticas -->
+                    <div class="row">
+                        <!-- Vendas Hoje Card -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-success shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                Vendas Hoje</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="venda-hoje">R$ 0,00</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ticket Médio Card -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-info shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                Ticket Médio</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="ticket-medio">R$ 0,00</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botão Atualizar -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Atualização</div>
+                                            <button class="btn btn-primary btn-sm" onclick="atualizarDashboard()">
+                                                <i class="fas fa-sync-alt"></i> Atualizar Dados
+                                            </button>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-sync fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seção de Pedidos Recentes -->
+                    <div class="row">
+                        <div class="col-lg-12 mb-4">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Pedidos Recentes</h6>
+                                    <div class="dropdown no-arrow">
+                                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                                            aria-labelledby="dropdownMenuLink">
+                                            <div class="dropdown-header">Ações:</div>
+                                            <a class="dropdown-item" href="#" onclick="atualizarDashboard()">Atualizar</a>
+                                            <a class="dropdown-item" href="pedidos.html">Ver Todos</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div id="pedidos-recentes-lista">
+                                        <div class="text-center">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="sr-only">Carregando...</span>
+                                            </div>
+                                            <p class="mt-2 text-muted">Carregando pedidos recentes...</p>
                                         </div>
                                     </div>
                                 </div>
@@ -170,7 +262,7 @@
     </button>
 
     <!-- Core JavaScript-->
-    <script src="cordova.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>

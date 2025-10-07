@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: ws: http://localhost:* https://*.cloudflare.com https://*.googleapis.com https://*.gstatic.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.cloudflare.com; font-src 'self' https://*.gstatic.com https://*.cloudflare.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://*.cloudflare.com; connect-src 'self' http://localhost:* ws://localhost:*; img-src 'self' data: content: https://*.cloudflare.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: ws: http://localhost:* https://*.cloudflare.com https://*.googleapis.com https://*.gstatic.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.cloudflare.com; font-src 'self' https://*.gstatic.com https://*.cloudflare.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://*.cloudflare.com; connect-src 'self' http://localhost:* ws://localhost:* https://*.cloudflare.com; img-src 'self' data: content: https://*.cloudflare.com;">
     <meta name="format-detection" content="telephone=no">
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -43,55 +43,40 @@
 
                 <!-- Begin Page Content -->
                 <div class="container-fluid">
-                    <!-- Tamanhos de Pizza -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                            <h6 class="m-0 font-weight-bold text-primary">Tamanhos de Pizza</h6>
-                            <button class="btn btn-primary btn-sm" onclick="abrirModalTamanho()">
-                                <i class="fas fa-plus"></i> Novo Tamanho
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table" id="tabelaTamanhos">
-                                    <thead>
-                                        <tr>
-                                            <th>Tamanho</th>
-                                            <th>Descrição</th>
-                                            <th>Preço (R$)</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
+                    <!-- Navegação por Categorias -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card shadow">
+                                <div class="card-body">
+                                    <h6 class="font-weight-bold text-primary mb-3">Categorias de Produtos</h6>
+                                    <div class="btn-group flex-wrap" role="group" aria-label="Categorias">
+                                        <button type="button" class="btn btn-outline-primary active" onclick="exibirProdutosPorCategoria('pasteis')">
+                                            <i class="fas fa-cookie-bite"></i> Pastéis
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="exibirProdutosPorCategoria('salgados')">
+                                            <i class="fas fa-hamburger"></i> Salgados
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="exibirProdutosPorCategoria('bolo')">
+                                            <i class="fas fa-birthday-cake"></i> Bolos
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="exibirProdutosPorCategoria('bebidas')">
+                                            <i class="fas fa-glass-cheers"></i> Bebidas
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="exibirProdutosPorCategoria('pizzas')">
+                                            <i class="fas fa-pizza-slice"></i> Pizzas
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="exibirProdutosPorCategoria('lanches_na_chapa')">
+                                            <i class="fas fa-utensils"></i> Lanches na Chapa
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Sabores de Pizza -->
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                            <h6 class="m-0 font-weight-bold text-primary">Sabores de Pizza</h6>
-                            <button class="btn btn-primary btn-sm" onclick="abrirModalSabor()">
-                                <i class="fas fa-plus"></i> Novo Sabor
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table" id="tabelaSabores">
-                                    <thead>
-                                        <tr>
-                                            <th>Nome</th>
-                                            <th>Categoria</th>
-                                            <th>Descrição</th>
-                                            <th>Adicional (R$)</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <!-- Container Dinâmico para Produtos -->
+                    <div id="containerProdutos">
+                        <!-- Conteúdo será carregado dinamicamente -->
                     </div>
                 </div>
                 <!-- /.container-fluid -->
@@ -112,72 +97,39 @@
     </div>
     <!-- End of Page Wrapper -->
 
-    <!-- Modal Tamanho -->
-    <div class="modal fade" id="modalTamanho" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Modal Produto -->
+    <div class="modal fade" id="modalProduto" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalTamanhoTitulo">Novo Tamanho de Pizza</h5>
+                    <h5 class="modal-title" id="modalProdutoTitulo">Novo Produto</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form id="formTamanho">
+                <form id="formProduto">
                     <div class="modal-body">
-                        <input type="hidden" id="tamanhoId">
+                        <input type="hidden" id="produtoId">
+                        <input type="hidden" id="produtoCategoria">
                         <div class="form-group">
-                            <label>Tamanho (ex: P, M, G)</label>
-                            <input type="text" class="form-control" id="tamanhoNome" required>
+                            <label>Nome</label>
+                            <input type="text" class="form-control" id="produtoNome" required>
                         </div>
                         <div class="form-group">
                             <label>Descrição</label>
-                            <input type="text" class="form-control" id="tamanhoDescricao" required>
+                            <textarea class="form-control" id="produtoDescricao" rows="3"></textarea>
                         </div>
                         <div class="form-group">
                             <label>Preço (R$)</label>
-                            <input type="number" class="form-control" id="tamanhoPreco" step="0.01" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Salvar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Sabor -->
-    <div class="modal fade" id="modalSabor" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalSaborTitulo">Novo Sabor de Pizza</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form id="formSabor">
-                    <div class="modal-body">
-                        <input type="hidden" id="saborId">
-                        <div class="form-group">
-                            <label>Nome</label>
-                            <input type="text" class="form-control" id="saborNome" required>
+                            <input type="number" class="form-control" id="produtoPreco" step="0.01" required>
                         </div>
                         <div class="form-group">
-                            <label>Categoria</label>
-                            <select class="form-control" id="saborCategoria" required>
-                                <option value="tradicional">Tradicional</option>
-                                <option value="especial">Especial</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Descrição</label>
-                            <textarea class="form-control" id="saborDescricao" required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Valor Adicional (R$)</label>
-                            <input type="number" class="form-control" id="saborAdicional" step="0.01" value="0">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="produtoAtivo" checked>
+                                <label class="form-check-label" for="produtoAtivo">
+                                    Produto Ativo
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -199,7 +151,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
     <script src="js/sidebar-loader.js"></script>
-    <script type="module" src="js/produtos.js"></script>
+    <script type="module" src="js/produtos.js?v=2024"></script>
     <script>
         window.scrollToTop = function() {
             document.body.scrollTop = 0;

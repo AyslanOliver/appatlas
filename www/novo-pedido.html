@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: https://*.cloudflare.com https://*.googleapis.com https://*.gstatic.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.cloudflare.com; font-src 'self' https://*.gstatic.com https://*.cloudflare.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.cloudflare.com; img-src 'self' data: content: https://*.cloudflare.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: ws: http://localhost:* https://*.cloudflare.com https://*.googleapis.com https://*.gstatic.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.cloudflare.com; font-src 'self' https://*.gstatic.com https://*.cloudflare.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://*.cloudflare.com; connect-src 'self' http://localhost:* ws://localhost:* https://*.cloudflare.com; img-src 'self' data: content: https://*.cloudflare.com;">
     <meta name="format-detection" content="telephone=no">
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -107,10 +107,12 @@
                                             <label for="categoria">Categoria do Produto</label>
                                             <select class="form-control" id="categoria" required>
                                                 <option value="">Selecione uma categoria</option>
-                                                <option value="pizza">Pizza</option>
-                                                <option value="lanche">Lanche na Chapa</option>
-                                                <option value="salgado">Salgado</option>
-                                                <option value="bebida">Bebida</option>
+                                                <option value="pasteis">Pastéis</option>
+                                                <option value="salgados">Salgados</option>
+                                                <option value="bolo">Bolos</option>
+                                                <option value="bebidas">Bebidas</option>
+                                                <option value="pizzas">Pizzas</option>
+                                                <option value="lanches_na_chapa">Lanches na Chapa</option>
                                             </select>
                                         </div>
 
@@ -120,10 +122,30 @@
                                     </div>
                                 </div>
 
+                                <!-- Carrinho de Compras -->
+                                <div class="card shadow mb-4">
+                                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                        <h6 class="m-0 font-weight-bold text-primary">
+                                            <i class="fas fa-shopping-cart"></i> Carrinho de Compras
+                                            <span class="badge badge-primary ml-2" id="contadorCarrinho" style="display: none;">0</span>
+                                        </h6>
+                                        <div class="text-right">
+                                            <strong class="text-success" id="totalCarrinho">R$ 0,00</strong>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="carrinhoItens">
+                                            <p class="text-muted">Carrinho vazio</p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Botões -->
                                 <div class="text-right">
                                     <button type="button" class="btn btn-secondary" onclick="window.history.back()">Cancelar</button>
-                                    <button type="submit" class="btn btn-primary">Criar Pedido</button>
+                                    <button type="button" class="btn btn-success mr-2" onclick="finalizarPedidoCompleto()" id="btnFinalizarPedido">
+                                        <i class="fas fa-check"></i> Finalizar Pedido
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -153,7 +175,7 @@
     </button>
 
     <!-- Core JavaScript-->
-    <script src="cordova.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
