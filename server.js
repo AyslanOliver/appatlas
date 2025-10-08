@@ -32,7 +32,13 @@ app.get('/api/pedidos', async (req, res) => {
             return res.status(503).json({ error: 'Banco de dados não conectado' });
         }
         const pedidos = await pedidoQueries.getAll();
-        res.json(pedidos);
+        // Converter _id para id para compatibilidade com frontend
+        const pedidosFormatados = pedidos.map(pedido => ({
+            ...pedido,
+            id: pedido._id.toString(),
+            _id: undefined
+        }));
+        res.json(pedidosFormatados);
     } catch (error) {
         console.error('Erro ao buscar pedidos:', error);
         res.status(500).json({ error: 'Erro interno do servidor' });
@@ -99,6 +105,31 @@ app.put('/api/pedidos/:id', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         console.error('Erro ao atualizar pedido:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+});
+
+// Rota para deletar todos os pedidos
+app.delete('/api/pedidos', async (req, res) => {
+    try {
+        if (!dbConnected) {
+            return res.status(503).json({ error: 'Banco de dados não conectado' });
+        }
+        
+        const { deleteAll } = req.query;
+        
+        if (deleteAll === 'true') {
+            const resultado = await pedidoQueries.deleteAll();
+            res.json({ 
+                success: true, 
+                message: resultado.message,
+                deletedCount: resultado.deletedCount
+            });
+        } else {
+            res.status(400).json({ error: 'Parâmetro deleteAll=true é obrigatório' });
+        }
+    } catch (error) {
+        console.error('Erro ao deletar todos os pedidos:', error);
         res.status(500).json({ error: 'Erro interno do servidor' });
     }
 });

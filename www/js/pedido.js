@@ -2,29 +2,115 @@
 import { criarPedido } from './api.js';
 import { GerenciadorImpressao } from './impressora-pos58.js';
 
+// Adicionar CSS para animações e responsividade
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+    
+    @media (max-width: 768px) {
+        .sabores-grid {
+            flex-direction: column !important;
+            align-items: center !important;
+        }
+        
+        .sabor-option {
+            min-width: 280px !important;
+            max-width: 320px !important;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .sabor-option {
+            min-width: 250px !important;
+            max-width: 280px !important;
+            padding: 15px !important;
+        }
+        
+        .confirmation-badge {
+            padding: 12px 20px !important;
+            font-size: 0.9rem !important;
+        }
+    }
+`;
+document.head.appendChild(style);
+
 // Sistema de carrinho de compras
 let carrinho = [];
 let contadorItens = 0;
 
-// Configuração dos preços e sabores
-const PRECOS_PIZZAS = {
-    P: 35.00,
-    M: 45.00,
-    G: 55.00,
-    GG: 65.00
+// Nova estrutura de dados para categorias, tamanhos e sabores
+const CATEGORIAS = {
+    pizzas: {
+        nome: 'Pizzas',
+        descricao: 'Pizzas tradicionais e especiais',
+        temTamanhos: true,
+        temSabores: true
+    },
+    pasteis: {
+        nome: 'Pastéis',
+        descricao: 'Pastéis variados',
+        temTamanhos: false,
+        temSabores: false
+    },
+    salgados: {
+        nome: 'Salgados',
+        descricao: 'Salgados assados e fritos',
+        temTamanhos: false,
+        temSabores: false
+    },
+    bolo: {
+        nome: 'Bolos',
+        descricao: 'Bolos e doces',
+        temTamanhos: false,
+        temSabores: false
+    },
+    bebidas: {
+        nome: 'Bebidas',
+        descricao: 'Refrigerantes, sucos e águas',
+        temTamanhos: false,
+        temSabores: false
+    },
+    lanches_na_chapa: {
+        nome: 'Lanches na Chapa',
+        descricao: 'Lanches grelhados',
+        temTamanhos: false,
+        temSabores: false
+    }
 };
+
+const TAMANHOS_PIZZA = [
+    { id: 'P', nome: 'Pequena', descricao: '4 fatias', preco: 35.00 },
+    { id: 'M', nome: 'Média', descricao: '6 fatias', preco: 45.00 },
+    { id: 'G', nome: 'Grande', descricao: '8 fatias', preco: 55.00 },
+    { id: 'GG', nome: 'Gigante', descricao: '12 fatias', preco: 65.00 }
+];
 
 const SABORES_PIZZAS = {
     tradicionais: [
-        { id: 'mussarela', nome: 'Mussarela', descricao: 'Queijo mussarela e orégano' },
-        { id: 'calabresa', nome: 'Calabresa', descricao: 'Calabresa fatiada e cebola' },
-        { id: 'portuguesa', nome: 'Portuguesa', descricao: 'Presunto, ovo, cebola e ervilha' },
-        { id: 'frango', nome: 'Frango com Catupiry', descricao: 'Frango desfiado e catupiry' },
-        { id: 'margherita', nome: 'Margherita', descricao: 'Mussarela, tomate e manjericão' }
+        { id: 'mussarela', nome: 'Mussarela', descricao: 'Queijo mussarela e orégano', preco: 0 },
+        { id: 'calabresa', nome: 'Calabresa', descricao: 'Calabresa fatiada e cebola', preco: 0 },
+        { id: 'portuguesa', nome: 'Portuguesa', descricao: 'Presunto, ovo, cebola e ervilha', preco: 0 },
+        { id: 'frango', nome: 'Frango com Catupiry', descricao: 'Frango desfiado e catupiry', preco: 0 },
+        { id: 'margherita', nome: 'Margherita', descricao: 'Mussarela, tomate e manjericão', preco: 0 }
     ],
     especiais: [
-        { id: 'atum', nome: 'Atum Especial', descricao: 'Atum, cebola e azeitonas', adicional: 5.00 },
-        { id: 'bacon', nome: 'Bacon Supreme', descricao: 'Bacon crocante, cebola e catupiry', adicional: 5.00 }
+        { id: 'atum', nome: 'ATUM', descricao: 'Atum, cebola e azeitonas', preco: 5.00 },
+        { id: 'bacon', nome: 'BACON', descricao: 'Bacon crocante, cebola e catupiry', preco: 5.00 }
     ]
 };
 
@@ -35,13 +121,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Event listener para mudança de categoria
     if (categoriaSelect) {
-        categoriaSelect.addEventListener('change', async function() {
+        categoriaSelect.addEventListener('change', function() {
             const categoriaSelecionada = this.value;
             
             if (categoriaSelecionada === 'pizzas') {
-                await carregarProdutosPizza();
+                mostrarSelecaoTamanhosPizza();
             } else if (categoriaSelecionada) {
-                await carregarProdutosCategoria(categoriaSelecionada);
+                carregarProdutosCategoria(categoriaSelecionada);
             } else {
                 detalhesCategoria.innerHTML = '';
             }
@@ -357,301 +443,772 @@ async function atualizarContadores() {
     }
 }
 
-// Função para carregar produtos de pizza com tamanhos
-async function carregarProdutosPizza() {
-    try {
-        const response = await fetch('http://localhost:3000/api/produtos');
-        const produtos = await response.json();
-        
-        // Verificar se produtos é um array
-        if (!Array.isArray(produtos)) {
-            console.error('Dados de produtos não são um array:', produtos);
-            return;
-        }
-        
-        const pizzas = produtos.filter(produto => produto.categoria === 'pizzas');
-        console.log('Pizzas encontradas:', pizzas.length);
-        
-        if (pizzas.length > 0) {
-            mostrarSelecaoPizza(pizzas);
-        } else {
-            console.log('Nenhuma pizza encontrada');
-            const detalhesCategoria = document.getElementById('detalhesCategoria');
-            detalhesCategoria.innerHTML = '<p class="text-muted">Nenhuma pizza disponível no momento.</p>';
-        }
-    } catch (error) {
-        console.error('Erro ao carregar pizzas:', error);
-        const detalhesCategoria = document.getElementById('detalhesCategoria');
-        detalhesCategoria.innerHTML = '<p class="text-danger">Erro ao carregar pizzas. Tente novamente.</p>';
-    }
-}
-
-// Função para carregar produtos de outras categorias
-async function carregarProdutosCategoria(categoria) {
-    try {
-        const response = await fetch('http://localhost:3000/api/produtos');
-        const todosProdutos = await response.json();
-        
-        // Verificar se produtos é um array
-        if (!Array.isArray(todosProdutos)) {
-            console.error('Dados de produtos não são um array:', todosProdutos);
-            return;
-        }
-        
-        const produtos = todosProdutos.filter(produto => produto.categoria === categoria);
-        console.log(`Produtos encontrados para categoria ${categoria}:`, produtos.length);
-        
-        if (produtos.length > 0) {
-            mostrarSelecaoProdutos(produtos);
-        } else {
-            const detalhesCategoria = document.getElementById('detalhesCategoria');
-            detalhesCategoria.innerHTML = '<p class="text-muted">Nenhum produto disponível nesta categoria.</p>';
-        }
-    } catch (error) {
-        console.error('Erro ao carregar produtos:', error);
-        const detalhesCategoria = document.getElementById('detalhesCategoria');
-        detalhesCategoria.innerHTML = '<p class="text-danger">Erro ao carregar produtos. Tente novamente.</p>';
-    }
-}
-
-// Função para mostrar seleção de pizza (agora vai direto para sabores)
-function mostrarSelecaoPizza(pizzas) {
-    // Ir direto para a seleção de sabores e tamanhos
-    mostrarTamanhosPizza(pizzas);
-}
-
-// Função para mostrar tamanhos de pizza e seleção de sabores
-function mostrarTamanhosPizza(pizzas) {
+// Função para mostrar seleção de tamanhos de pizza (primeiro passo)
+function mostrarSelecaoTamanhosPizza() {
     const detalhesCategoria = document.getElementById('detalhesCategoria');
     
-    // Primeiro, mostrar seleção de sabores
     let html = `
-        <div class="mt-3">
-            <h6>Escolha de 1 a 3 sabores:</h6>
-            <div class="form-group" id="saboresContainer">
+        <div class="mt-4">
+            <div class="text-center mb-5">
+                <h3 class="text-primary mb-3">
+                    <i class="fas fa-pizza-slice"></i> Escolha o Tamanho da Pizza
+                </h3>
+                <p class="text-muted lead">Selecione o tamanho ideal para você</p>
+            </div>
+            
+            <div class="tamanhos-container" style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-bottom: 30px;">
     `;
     
-    pizzas.forEach((pizza, index) => {
-        // Verificar se é pizza especial
-        const pizzasEspeciais = ['Atum', 'Bacon'];
-        const isEspecial = pizzasEspeciais.includes(pizza.sabor);
-        const labelClass = isEspecial ? 'text-warning font-weight-bold' : '';
-        const especialTag = isEspecial ? ' <span class="badge badge-warning">Especial</span>' : '';
-        
+    TAMANHOS_PIZZA.forEach((tamanho, index) => {
+        const iconSize = ['fa-2x', 'fa-3x', 'fa-4x', 'fa-5x'][index] || 'fa-3x';
         html += `
-            <div class="form-check">
-                <input class="form-check-input sabor-checkbox" type="checkbox" id="sabor${index}" value="${JSON.stringify(pizza).replace(/"/g, '&quot;')}" data-sabor="${pizza.sabor}">
-                <label class="form-check-label ${labelClass}" for="sabor${index}">
-                    ${pizza.sabor} - ${pizza.nome}${especialTag}
-                </label>
+            <div class="tamanho-option" style="
+                background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+                border: 2px solid #e9ecef;
+                border-radius: 20px;
+                padding: 30px 20px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.4s ease;
+                min-width: 200px;
+                max-width: 250px;
+                flex: 1;
+                position: relative;
+                overflow: hidden;
+            " onclick="selecionarTamanho('${tamanho.id}')" data-tamanho="${tamanho.id}">
+                
+                <div class="tamanho-icon mb-3" style="color: #007bff; transition: all 0.3s ease;">
+                    <i class="fas fa-pizza-slice ${iconSize}"></i>
+                </div>
+                
+                <h4 class="tamanho-nome mb-2" style="color: #495057; font-weight: 600;">
+                    ${tamanho.nome}
+                </h4>
+                
+                <p class="tamanho-desc mb-3" style="color: #6c757d; font-size: 0.9rem; line-height: 1.4;">
+                    ${tamanho.descricao}
+                </p>
+                
+                <div class="tamanho-preco" style="
+                    background: linear-gradient(45deg, #28a745, #20c997);
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 25px;
+                    font-size: 1.2rem;
+                    font-weight: bold;
+                    margin: 0 auto;
+                    display: inline-block;
+                    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+                ">
+                    R$ ${tamanho.preco.toFixed(2)}
+                </div>
+                
+                <div class="selection-indicator" style="
+                    position: absolute;
+                    top: 15px;
+                    right: 15px;
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 50%;
+                    background: #28a745;
+                    color: white;
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 16px;
+                ">
+                    <i class="fas fa-check"></i>
+                </div>
             </div>
         `;
     });
     
     html += `
             </div>
-            <div class="alert alert-info mt-2" id="saboresInfo">
-                <small>Selecione entre 1 e 3 sabores para sua pizza.</small>
-            </div>
-            <div id="tamanhoContainer" style="display: none;">
-                <h6 class="mt-3">Escolha o tamanho:</h6>
-                <div class="form-group" id="tamanhosRadios">
+            
+            <div class="text-center">
+                <div class="alert alert-info d-inline-block" style="border-radius: 15px; border: none; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);">
+                    <i class="fas fa-info-circle"></i> Clique no tamanho desejado para continuar
                 </div>
             </div>
-            <div id="resumoPedido"></div>
+            
+            <div id="saboresContainer" style="display: none;">
+                <!-- Sabores serão carregados aqui -->
+            </div>
+            <div id="resumoPedido" style="display: none;"></div>
         </div>
     `;
     
     detalhesCategoria.innerHTML = html;
     
-    // Adicionar event listeners para seleção de sabores
-    const saboresCheckboxes = document.querySelectorAll('.sabor-checkbox');
-    saboresCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            validarSelecaoSabores();
+    // Adicionar efeitos interativos mais suaves
+    document.querySelectorAll('.tamanho-option').forEach(option => {
+        option.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px) scale(1.02)';
+            this.style.boxShadow = '0 15px 35px rgba(0,123,255,0.15)';
+            this.style.borderColor = '#007bff';
+            this.querySelector('.tamanho-icon').style.transform = 'scale(1.1)';
+            this.querySelector('.tamanho-preco').style.transform = 'scale(1.05)';
         });
-    });
-}
-
-// Função para validar seleção de sabores
-function validarSelecaoSabores() {
-    const saboresSelecionados = document.querySelectorAll('.sabor-checkbox:checked');
-    const saboresInfo = document.getElementById('saboresInfo');
-    const tamanhoContainer = document.getElementById('tamanhoContainer');
-    
-    if (saboresSelecionados.length === 0) {
-        saboresInfo.innerHTML = '<small>Selecione entre 1 e 3 sabores para sua pizza.</small>';
-        saboresInfo.className = 'alert alert-info mt-2';
-        tamanhoContainer.style.display = 'none';
-    } else if (saboresSelecionados.length > 3) {
-        // Desmarcar o último selecionado se exceder 3
-        saboresSelecionados[saboresSelecionados.length - 1].checked = false;
-        saboresInfo.innerHTML = '<small><strong>Máximo de 3 sabores permitidos!</strong></small>';
-        saboresInfo.className = 'alert alert-warning mt-2';
-        return;
-    } else {
-        saboresInfo.innerHTML = `<small>${saboresSelecionados.length} sabor(es) selecionado(s). ${saboresSelecionados.length < 3 ? 'Você pode selecionar mais ' + (3 - saboresSelecionados.length) + ' sabor(es).' : 'Máximo atingido.'}</small>`;
-        saboresInfo.className = 'alert alert-success mt-2';
         
-        // Mostrar seleção de tamanhos
-        mostrarTamanhosParaSabores(saboresSelecionados);
-        tamanhoContainer.style.display = 'block';
-    }
-}
-
-// Função para calcular preço baseado nos sabores selecionados
-function calcularPrecoMultiSabores(saboresSelecionados, tamanhoIndex) {
-    const pizzasEspeciais = ['Atum', 'Bacon'];
-    let temEspecial = false;
-    let precoBase = 0;
-    
-    // Verificar se há sabores especiais selecionados
-    saboresSelecionados.forEach(checkbox => {
-        const pizza = JSON.parse(checkbox.value.replace(/&quot;/g, '"'));
-        if (pizzasEspeciais.includes(pizza.sabor)) {
-            temEspecial = true;
-        }
-    });
-    
-    // Pegar o preço base da primeira pizza
-    const primeiraPizza = JSON.parse(saboresSelecionados[0].value.replace(/&quot;/g, '"'));
-    precoBase = primeiraPizza.tamanhos[tamanhoIndex].preco;
-    
-    // Se tem sabor especial, usar o preço da pizza especial
-    if (temEspecial) {
-        // Buscar uma pizza especial para pegar o preço correto
-        saboresSelecionados.forEach(checkbox => {
-            const pizza = JSON.parse(checkbox.value.replace(/&quot;/g, '"'));
-            if (pizzasEspeciais.includes(pizza.sabor)) {
-                precoBase = Math.max(precoBase, pizza.tamanhos[tamanhoIndex].preco);
+        option.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('selected')) {
+                this.style.transform = 'translateY(0) scale(1)';
+                this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.08)';
+                this.style.borderColor = '#e9ecef';
+                this.querySelector('.tamanho-icon').style.transform = 'scale(1)';
+                this.querySelector('.tamanho-preco').style.transform = 'scale(1)';
             }
         });
-    }
-    
-    return precoBase;
-}
-
-// Função para mostrar tamanhos baseado nos sabores selecionados
-function mostrarTamanhosParaSabores(saboresSelecionados) {
-    const tamanhosRadios = document.getElementById('tamanhosRadios');
-    
-    // Pegar os tamanhos da primeira pizza (assumindo que todas têm os mesmos tamanhos)
-    const primeiraPizza = JSON.parse(saboresSelecionados[0].value.replace(/&quot;/g, '"'));
-    
-    let html = '';
-    primeiraPizza.tamanhos.forEach((tamanho, index) => {
-        // Calcular preço baseado nos sabores selecionados
-        const precoCalculado = calcularPrecoMultiSabores(saboresSelecionados, index);
         
-        html += `
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="tamanho" id="tamanho${index}" value="${index}" data-preco="${precoCalculado}">
-                <label class="form-check-label" for="tamanho${index}">
-                    ${tamanho.nome} - R$ ${precoCalculado.toFixed(2)} (${tamanho.descricao})
-                </label>
-            </div>
-        `;
-    });
-    
-    tamanhosRadios.innerHTML = html;
-    
-    // Adicionar event listener para seleção de tamanho
-    document.querySelectorAll('input[name="tamanho"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.checked) {
-                const tamanhoIndex = parseInt(this.value);
-                const precoCalculado = parseFloat(this.dataset.preco);
-                const primeiraPizza = JSON.parse(saboresSelecionados[0].value.replace(/&quot;/g, '"'));
-                const tamanhoInfo = primeiraPizza.tamanhos[tamanhoIndex];
-                
-                // Criar objeto tamanho com preço calculado
-                const tamanhoComPreco = {
-                    ...tamanhoInfo,
-                    preco: precoCalculado
-                };
-                
-                const saboresSelecionados = document.querySelectorAll('.sabor-checkbox:checked');
-                mostrarResumoPedidoPizza(saboresSelecionados, tamanhoComPreco);
-            }
-        });
     });
 }
 
-// Função para mostrar resumo do pedido com múltiplos sabores
-function mostrarResumoPedidoPizza(saboresSelecionados, tamanho) {
-    const resumoPedido = document.getElementById('resumoPedido');
-    
-    const sabores = Array.from(saboresSelecionados).map(checkbox => {
-        const pizza = JSON.parse(checkbox.value.replace(/&quot;/g, '"'));
-        return pizza.sabor;
+// Função para selecionar tamanho
+function selecionarTamanho(tamanhoId) {
+    // Remover seleção anterior
+    document.querySelectorAll('.tamanho-option').forEach(opt => {
+        opt.classList.remove('selected');
+        opt.style.borderColor = '#e9ecef';
+        opt.style.background = 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)';
+        opt.querySelector('.selection-indicator').style.display = 'none';
     });
     
-    // Verificar se há sabores especiais
-    const pizzasEspeciais = ['Atum', 'Bacon'];
-    const saboresEspeciais = sabores.filter(sabor => pizzasEspeciais.includes(sabor));
-    const saboresNormais = sabores.filter(sabor => !pizzasEspeciais.includes(sabor));
-    
-    let detalhesPreco = '';
-    if (saboresEspeciais.length > 0) {
-        detalhesPreco = `
-            <div class="alert alert-info mt-2">
-                <small>
-                    <strong>Preço especial aplicado!</strong><br>
-                    ${saboresEspeciais.length > 0 ? `Sabores especiais: ${saboresEspeciais.join(', ')}` : ''}
-                    ${saboresNormais.length > 0 ? `<br>Sabores normais: ${saboresNormais.join(', ')}` : ''}
-                </small>
-            </div>
-        `;
+    // Marcar como selecionado
+    const selectedOption = document.querySelector(`[data-tamanho="${tamanhoId}"]`);
+    if (selectedOption) {
+        selectedOption.classList.add('selected');
+        selectedOption.style.borderColor = '#28a745';
+        selectedOption.style.background = 'linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%)';
+        selectedOption.querySelector('.selection-indicator').style.display = 'flex';
+        
+        // Animação de confirmação
+        selectedOption.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+            selectedOption.style.transform = 'translateY(-8px) scale(1.02)';
+        }, 200);
     }
     
-    // Criar objeto do item para o carrinho
-    const itemPizza = {
-        nome: `Pizza ${sabores.length === 1 ? sabores[0] : 'Mista'}`,
-        descricao: `${sabores.join(', ')} - ${tamanho.nome} (${tamanho.descricao})`,
-        preco: tamanho.preco,
-        categoria: 'pizza',
-        sabores: sabores,
-        tamanho: tamanho.nome,
-        tamanhoDetalhes: tamanho
-    };
+    // Mostrar seleção de sabores
+    mostrarSelecaoSabores(tamanhoId);
+}
+
+// Função para mostrar seleção de sabores (segundo passo)
+function mostrarSelecaoSabores(tamanhoSelecionado) {
+    const saboresContainer = document.getElementById('saboresContainer');
+    const tamanhoInfo = TAMANHOS_PIZZA.find(t => t.id === tamanhoSelecionado);
     
-    const html = `
-        <div class="card bg-light mt-3">
-            <div class="card-body">
-                <h6 class="card-title">Resumo do Item</h6>
-                <p><strong>Pizza:</strong> ${sabores.length === 1 ? sabores[0] : sabores.join(', ')}</p>
-                <p><strong>Sabores:</strong> ${sabores.length} sabor(es)</p>
-                <p><strong>Tamanho:</strong> ${tamanho.nome}</p>
-                <p><strong>Preço:</strong> R$ ${tamanho.preco.toFixed(2)}</p>
-                <p><strong>Descrição:</strong> ${tamanho.descricao}</p>
-                ${detalhesPreco}
-                <div class="mt-3">
-                    <button class="btn btn-primary btn-block" onclick="adicionarAoCarrinho(${JSON.stringify(itemPizza).replace(/"/g, '&quot;')})">
-                        <i class="fas fa-cart-plus"></i> Adicionar ao Carrinho
-                    </button>
+    let html = `
+        <div class="mt-4">
+            <div class="text-center mb-4">
+                <div class="alert alert-primary">
+                    <h5 class="mb-1">
+                        <i class="fas fa-check-circle"></i> Pizza ${tamanhoInfo.nome} Selecionada
+                    </h5>
+                    <p class="mb-0">${tamanhoInfo.descricao} - <strong>R$ ${tamanhoInfo.preco.toFixed(2)}</strong></p>
                 </div>
+                <h5 class="text-secondary">
+                    <i class="fas fa-utensils"></i> Agora escolha os sabores (1 a 3)
+                </h5>
+            </div>
+            
+            <!-- Sabores Tradicionais -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 text-secondary">
+                        <i class="fas fa-pizza-slice"></i> Sabores Tradicionais
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+    `;
+    
+    // Sabores tradicionais
+    SABORES_PIZZAS.tradicionais.forEach((sabor, index) => {
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card sabor-card h-100" style="cursor: pointer; transition: all 0.3s;">
+                    <div class="card-body p-3">
+                        <div class="form-check">
+                            <input class="form-check-input sabor-checkbox" type="checkbox" 
+                                   id="sabor_trad_${index}" value="${sabor.id}" 
+                                   data-nome="${sabor.nome}" data-preco="${sabor.preco}">
+                            <label class="form-check-label w-100" for="sabor_trad_${index}" style="cursor: pointer;">
+                                <h6 class="mb-1">${sabor.nome}</h6>
+                                <small class="text-muted">${sabor.descricao}</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sabores Especiais -->
+            <div class="card mb-3">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="fas fa-star"></i> Sabores Especiais <span class="badge badge-dark">+R$ 5,00</span>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+    `;
+    
+    // Sabores especiais
+    SABORES_PIZZAS.especiais.forEach((sabor, index) => {
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card sabor-card sabor-especial h-100" style="cursor: pointer; transition: all 0.3s; border-color: #ffc107;">
+                    <div class="card-body p-3">
+                        <div class="form-check">
+                            <input class="form-check-input sabor-checkbox sabor-especial" type="checkbox" 
+                                   id="sabor_esp_${index}" value="${sabor.id}" 
+                                   data-nome="${sabor.nome}" data-preco="${sabor.preco}">
+                            <label class="form-check-label w-100" for="sabor_esp_${index}" style="cursor: pointer;">
+                                <h6 class="mb-1 text-warning">
+                                    ${sabor.nome} <i class="fas fa-star text-warning"></i>
+                                </h6>
+                                <small class="text-muted">${sabor.descricao}</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Info e Botão -->
+            <div class="text-center">
+                <div class="alert alert-info" id="saboresInfo">
+                    <i class="fas fa-info-circle"></i> Selecione de 1 a 3 sabores para sua pizza
+                </div>
+                
+                <button type="button" class="btn btn-success btn-lg px-5" id="adicionarPizzaBtn" 
+                        style="display: none;" onclick="adicionarPizzaAoCarrinho('${tamanhoSelecionado}')">
+                    <i class="fas fa-cart-plus"></i> Adicionar ao Carrinho
+                </button>
             </div>
         </div>
     `;
     
-    resumoPedido.innerHTML = html;
+    saboresContainer.innerHTML = html;
+    saboresContainer.style.display = 'block';
+    
+    // Adicionar event listeners para seleção de sabores
+    document.querySelectorAll('.sabor-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            validarSelecaoSaboresPizza(tamanhoSelecionado);
+            
+            // Efeito visual no card
+            const card = this.closest('.sabor-card');
+            if (this.checked) {
+                card.style.backgroundColor = '#e3f2fd';
+                card.style.borderColor = '#2196f3';
+                card.style.transform = 'scale(1.02)';
+            } else {
+                card.style.backgroundColor = '';
+                card.style.borderColor = '';
+                card.style.transform = '';
+            }
+        });
+    });
+    
+    // Adicionar efeitos hover nos cards
+    document.querySelectorAll('.sabor-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            if (!this.querySelector('input').checked) {
+                this.style.backgroundColor = '#f8f9fa';
+                this.style.transform = 'translateY(-2px)';
+            }
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            if (!this.querySelector('input').checked) {
+                this.style.backgroundColor = '';
+                this.style.transform = '';
+            }
+        });
+        
+        // Permitir clicar no card para selecionar
+        card.addEventListener('click', function(e) {
+            if (e.target.type !== 'checkbox') {
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                checkbox.click();
+            }
+        });
+    });
 }
 
-// Função para mostrar resumo do pedido (mantida para compatibilidade)
-function mostrarResumoPedido(pizza, tamanho) {
-    const resumoPedido = document.getElementById('resumoPedido');
-    const detalhesItem = document.getElementById('detalhesItem');
+// Função para validar seleção de sabores da pizza
+function validarSelecaoSaboresPizza(tamanhoSelecionado) {
+    const saboresSelecionados = document.querySelectorAll('.sabor-checkbox:checked');
+    const saboresInfo = document.getElementById('saboresInfo');
+    const adicionarBtn = document.getElementById('adicionarPizzaBtn');
     
-    const html = `
-        <p><strong>Pizza:</strong> ${pizza.nome}</p>
-        <p><strong>Tamanho:</strong> ${tamanho.nome} (${tamanho.descricao})</p>
-        <p><strong>Preço:</strong> R$ ${tamanho.preco.toFixed(2)}</p>
-        <p><strong>Descrição:</strong> ${pizza.descricao}</p>
+    if (saboresSelecionados.length === 0) {
+        saboresInfo.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i> 
+            <strong>Atenção:</strong> Selecione pelo menos 1 sabor para continuar
+        `;
+        saboresInfo.className = 'alert alert-warning';
+        adicionarBtn.style.display = 'none';
+    } else if (saboresSelecionados.length > 3) {
+        saboresInfo.innerHTML = `
+            <i class="fas fa-times-circle"></i> 
+            <strong>Limite excedido:</strong> Máximo de 3 sabores permitidos
+        `;
+        saboresInfo.className = 'alert alert-danger';
+        adicionarBtn.style.display = 'none';
+        
+        // Desmarcar o último checkbox selecionado
+        saboresSelecionados[saboresSelecionados.length - 1].checked = false;
+        
+        // Remover efeito visual do card desmarcado
+        const ultimoCard = saboresSelecionados[saboresSelecionados.length - 1].closest('.sabor-card');
+        ultimoCard.style.backgroundColor = '';
+        ultimoCard.style.borderColor = '';
+        ultimoCard.style.transform = '';
+        return;
+    } else {
+        // Mostrar informações dos sabores selecionados
+        let precoTotal = TAMANHOS_PIZZA.find(t => t.id === tamanhoSelecionado).preco;
+        let saboresTexto = [];
+        let precoAdicional = 0;
+        
+        saboresSelecionados.forEach(checkbox => {
+            const nome = checkbox.getAttribute('data-nome');
+            const preco = parseFloat(checkbox.getAttribute('data-preco'));
+            
+            if (preco > 0) {
+                saboresTexto.push(`${nome} <span class="text-warning">(+R$ ${preco.toFixed(2)})</span>`);
+                precoAdicional += preco;
+                precoTotal += preco;
+            } else {
+                saboresTexto.push(nome);
+            }
+        });
+        
+        let infoHTML = `
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <i class="fas fa-check-circle text-success"></i> 
+                    <strong>Sabores selecionados (${saboresSelecionados.length}/3):</strong><br>
+                    <small>${saboresTexto.join(' • ')}</small>
+                </div>
+                <div class="col-md-4 text-right">
+                    <div class="text-muted small">
+                        Pizza: R$ ${TAMANHOS_PIZZA.find(t => t.id === tamanhoSelecionado).preco.toFixed(2)}
+                        ${precoAdicional > 0 ? `<br>Especiais: +R$ ${precoAdicional.toFixed(2)}` : ''}
+                    </div>
+                    <div class="h5 mb-0 text-success">
+                        <strong>Total: R$ ${precoTotal.toFixed(2)}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        saboresInfo.innerHTML = infoHTML;
+        saboresInfo.className = 'alert alert-success';
+        adicionarBtn.style.display = 'block';
+        
+        // Animar o botão quando aparecer
+        setTimeout(() => {
+            adicionarBtn.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                adicionarBtn.style.transform = 'scale(1)';
+            }, 200);
+        }, 100);
+    }
+}
+
+// Função para calcular preço da pizza com sabores especiais
+function calcularPrecoPizza(tamanhoId, saboresSelecionados) {
+    const tamanho = TAMANHOS_PIZZA.find(t => t.id === tamanhoId);
+    let precoBase = tamanho.preco;
+    let adicionalEspeciais = 0;
+    
+    // Verificar se há sabores especiais
+    saboresSelecionados.forEach(checkbox => {
+        const precoSabor = parseFloat(checkbox.getAttribute('data-preco'));
+        if (precoSabor > 0) {
+            adicionalEspeciais = 5.00; // Adicional fixo se houver pelo menos um sabor especial
+        }
+    });
+    
+    return precoBase + adicionalEspeciais;
+}
+
+// Função para adicionar pizza ao carrinho
+function adicionarPizzaAoCarrinho(tamanhoId) {
+    const saboresSelecionados = document.querySelectorAll('.sabor-checkbox:checked');
+    const tamanho = TAMANHOS_PIZZA.find(t => t.id === tamanhoId);
+    
+    const sabores = Array.from(saboresSelecionados).map(checkbox => ({
+        id: checkbox.value,
+        nome: checkbox.getAttribute('data-nome'),
+        preco: parseFloat(checkbox.getAttribute('data-preco'))
+    }));
+    
+    const precoTotal = calcularPrecoPizza(tamanhoId, saboresSelecionados);
+    
+    const itemPizza = {
+        nome: `Pizza ${tamanho.nome}`,
+        descricao: `${sabores.map(s => s.nome).join(', ')} - ${tamanho.descricao}`,
+        preco: precoTotal,
+        categoria: 'pizzas',
+        tamanho: tamanho,
+        sabores: sabores
+    };
+    
+    adicionarAoCarrinho(itemPizza);
+}
+
+// Função para carregar produtos de outras categorias
+function carregarProdutosCategoria(categoria) {
+    const detalhesCategoria = document.getElementById('detalhesCategoria');
+    
+    if (!CATEGORIAS[categoria]) {
+        detalhesCategoria.innerHTML = '<div class="alert alert-warning">Categoria não encontrada!</div>';
+        return;
+    }
+    
+    const categoriaInfo = CATEGORIAS[categoria];
+    
+    let html = `
+        <div class="mt-3">
+            <div class="text-center mb-4">
+                <h4 class="text-primary mb-2">
+                    <i class="fas fa-utensils"></i> ${categoriaInfo.nome}
+                </h4>
+                <p class="text-muted">${categoriaInfo.descricao}</p>
+            </div>
     `;
     
-    detalhesItem.innerHTML = html;
-    resumoPedido.style.display = 'block';
+    // Se a categoria tem tamanhos, mostrar seleção de tamanhos
+    if (categoriaInfo.tamanhos && categoriaInfo.tamanhos.length > 0) {
+        html += `
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 text-secondary">
+                        <i class="fas fa-expand-arrows-alt"></i> Escolha o Tamanho
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+        `;
+        
+        categoriaInfo.tamanhos.forEach((tamanho, index) => {
+            html += `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card tamanho-card h-100" style="cursor: pointer; transition: all 0.3s;">
+                        <div class="card-body p-3 text-center">
+                            <div class="form-check">
+                                <input class="form-check-input tamanho-radio" type="radio" name="tamanho_${categoria}" id="tamanho_${categoria}_${index}" value="${index}" data-preco="${tamanho.preco}">
+                                <label class="form-check-label w-100" for="tamanho_${categoria}_${index}" style="cursor: pointer;">
+                                    <h6 class="mb-1">${tamanho.nome}</h6>
+                                    <div class="text-success font-weight-bold">R$ ${tamanho.preco.toFixed(2)}</div>
+                                    <small class="text-muted">${tamanho.descricao}</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+                    </div>
+                </div>
+            </div>
+            <div id="saboresContainer_${categoria}" style="display: none;">
+                <!-- Sabores serão carregados aqui se necessário -->
+            </div>
+        `;
+    }
+    
+    // Se a categoria tem sabores, mostrar seleção de sabores
+    if (categoriaInfo.sabores && categoriaInfo.sabores.length > 0) {
+        html += `
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 text-secondary">
+                        <i class="fas fa-palette"></i> Escolha o Sabor
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+        `;
+        
+        categoriaInfo.sabores.forEach((sabor, index) => {
+            html += `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card sabor-card h-100" style="cursor: pointer; transition: all 0.3s;">
+                        <div class="card-body p-3 text-center">
+                            <div class="form-check">
+                                <input class="form-check-input sabor-radio" type="radio" name="sabor_${categoria}" id="sabor_${categoria}_${index}" value="${sabor}">
+                                <label class="form-check-label w-100" for="sabor_${categoria}_${index}" style="cursor: pointer;">
+                                    <h6 class="mb-1">${sabor}</h6>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    html += `
+        <div class="text-center">
+            <div class="alert alert-info" id="resumoItem_${categoria}" style="display: none;">
+                <!-- Resumo do item será mostrado aqui -->
+            </div>
+            <button type="button" class="btn btn-success btn-lg px-5" onclick="adicionarItemCategoria('${categoria}')" style="display: none;" id="btnAdicionar_${categoria}">
+                <i class="fas fa-cart-plus"></i> Adicionar ao Carrinho
+            </button>
+        </div>
+        </div>
+    `;
+    
+    detalhesCategoria.innerHTML = html;
+    
+    // Adicionar event listeners
+    adicionarEventListenersCategoria(categoria);
 }
+
+// Função para adicionar event listeners para categorias
+function adicionarEventListenersCategoria(categoria) {
+    const categoriaInfo = CATEGORIAS[categoria];
+    
+    // Event listeners para tamanhos
+    if (categoriaInfo.tamanhos && categoriaInfo.tamanhos.length > 0) {
+        document.querySelectorAll(`input[name="tamanho_${categoria}"]`).forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    // Remover seleção visual de outros cards
+                    document.querySelectorAll('.tamanho-card').forEach(card => {
+                        card.style.backgroundColor = '';
+                        card.style.borderColor = '';
+                        card.style.transform = '';
+                    });
+                    
+                    // Aplicar seleção visual ao card atual
+                    const card = this.closest('.tamanho-card');
+                    card.style.backgroundColor = '#e3f2fd';
+                    card.style.borderColor = '#2196f3';
+                    card.style.transform = 'scale(1.02)';
+                    
+                    mostrarResumoItemCategoria(categoria);
+                }
+            });
+        });
+        
+        // Adicionar efeitos hover para cards de tamanho
+        document.querySelectorAll('.tamanho-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                if (!this.querySelector('input').checked) {
+                    this.style.backgroundColor = '#f8f9fa';
+                    this.style.transform = 'translateY(-2px)';
+                }
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                if (!this.querySelector('input').checked) {
+                    this.style.backgroundColor = '';
+                    this.style.transform = '';
+                }
+            });
+            
+            // Permitir clicar no card para selecionar
+            card.addEventListener('click', function(e) {
+                if (e.target.type !== 'radio') {
+                    const radio = this.querySelector('input[type="radio"]');
+                    radio.click();
+                }
+            });
+        });
+    }
+    
+    // Event listeners para sabores
+    if (categoriaInfo.sabores && categoriaInfo.sabores.length > 0) {
+        document.querySelectorAll(`input[name="sabor_${categoria}"]`).forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    // Remover seleção visual de outros cards
+                    document.querySelectorAll('.sabor-card').forEach(card => {
+                        card.style.backgroundColor = '';
+                        card.style.borderColor = '';
+                        card.style.transform = '';
+                    });
+                    
+                    // Aplicar seleção visual ao card atual
+                    const card = this.closest('.sabor-card');
+                    card.style.backgroundColor = '#e8f5e8';
+                    card.style.borderColor = '#28a745';
+                    card.style.transform = 'scale(1.02)';
+                    
+                    mostrarResumoItemCategoria(categoria);
+                }
+            });
+        });
+        
+        // Adicionar efeitos hover para cards de sabor
+        document.querySelectorAll('.sabor-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                if (!this.querySelector('input').checked) {
+                    this.style.backgroundColor = '#f8f9fa';
+                    this.style.transform = 'translateY(-2px)';
+                }
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                if (!this.querySelector('input').checked) {
+                    this.style.backgroundColor = '';
+                    this.style.transform = '';
+                }
+            });
+            
+            // Permitir clicar no card para selecionar
+            card.addEventListener('click', function(e) {
+                if (e.target.type !== 'radio') {
+                    const radio = this.querySelector('input[type="radio"]');
+                    radio.click();
+                }
+            });
+        });
+    }
+    
+    // Se não tem tamanhos nem sabores, mostrar botão diretamente
+    if ((!categoriaInfo.tamanhos || categoriaInfo.tamanhos.length === 0) && 
+        (!categoriaInfo.sabores || categoriaInfo.sabores.length === 0)) {
+        document.getElementById(`btnAdicionar_${categoria}`).style.display = 'block';
+    }
+}
+
+// Função para mostrar resumo do item da categoria
+function mostrarResumoItemCategoria(categoria) {
+    const categoriaInfo = CATEGORIAS[categoria];
+    const resumoContainer = document.getElementById(`resumoItem_${categoria}`);
+    const btnAdicionar = document.getElementById(`btnAdicionar_${categoria}`);
+    
+    let tamanhoSelecionado = null;
+    let saborSelecionado = null;
+    let preco = 0;
+    let nome = categoriaInfo.nome;
+    let descricao = '';
+    
+    // Verificar tamanho selecionado
+    if (categoriaInfo.tamanhos && categoriaInfo.tamanhos.length > 0) {
+        const tamanhoRadio = document.querySelector(`input[name="tamanho_${categoria}"]:checked`);
+        if (tamanhoRadio) {
+            const tamanhoIndex = parseInt(tamanhoRadio.value);
+            tamanhoSelecionado = categoriaInfo.tamanhos[tamanhoIndex];
+            preco = tamanhoSelecionado.preco;
+            nome += ` ${tamanhoSelecionado.nome}`;
+            descricao = tamanhoSelecionado.descricao;
+        } else {
+            resumoContainer.style.display = 'none';
+            btnAdicionar.style.display = 'none';
+            return;
+        }
+    }
+    
+    // Verificar sabor selecionado
+    if (categoriaInfo.sabores && categoriaInfo.sabores.length > 0) {
+        const saborRadio = document.querySelector(`input[name="sabor_${categoria}"]:checked`);
+        if (saborRadio) {
+            saborSelecionado = saborRadio.value;
+            nome += ` de ${saborSelecionado}`;
+        } else {
+            resumoContainer.style.display = 'none';
+            btnAdicionar.style.display = 'none';
+            return;
+        }
+    }
+    
+    // Mostrar resumo
+    const html = `
+        <div class="alert alert-success">
+            <h6>Resumo do Item:</h6>
+            <p><strong>Produto:</strong> ${nome}</p>
+            ${descricao ? `<p><strong>Descrição:</strong> ${descricao}</p>` : ''}
+            ${saborSelecionado ? `<p><strong>Sabor:</strong> ${saborSelecionado}</p>` : ''}
+            <p><strong>Preço:</strong> R$ ${preco.toFixed(2)}</p>
+        </div>
+    `;
+    
+    resumoContainer.innerHTML = html;
+    resumoContainer.style.display = 'block';
+    btnAdicionar.style.display = 'block';
+}
+
+// Função para adicionar item da categoria ao carrinho
+function adicionarItemCategoria(categoria) {
+    const categoriaInfo = CATEGORIAS[categoria];
+    let tamanhoSelecionado = null;
+    let saborSelecionado = null;
+    let preco = 0;
+    let nome = categoriaInfo.nome;
+    let descricao = '';
+    
+    // Verificar tamanho selecionado
+    if (categoriaInfo.tamanhos && categoriaInfo.tamanhos.length > 0) {
+        const tamanhoRadio = document.querySelector(`input[name="tamanho_${categoria}"]:checked`);
+        if (tamanhoRadio) {
+            const tamanhoIndex = parseInt(tamanhoRadio.value);
+            tamanhoSelecionado = categoriaInfo.tamanhos[tamanhoIndex];
+            preco = tamanhoSelecionado.preco;
+            nome += ` ${tamanhoSelecionado.nome}`;
+            descricao = tamanhoSelecionado.descricao;
+        }
+    }
+    
+    // Verificar sabor selecionado
+    if (categoriaInfo.sabores && categoriaInfo.sabores.length > 0) {
+        const saborRadio = document.querySelector(`input[name="sabor_${categoria}"]:checked`);
+        if (saborRadio) {
+            saborSelecionado = saborRadio.value;
+            nome += ` de ${saborSelecionado}`;
+        }
+    }
+    
+    const item = {
+        nome: nome,
+        descricao: descricao || categoriaInfo.descricao,
+        preco: preco,
+        categoria: categoria,
+        tamanho: tamanhoSelecionado,
+        sabor: saborSelecionado
+    };
+    
+    adicionarAoCarrinho(item);
+    
+    // Limpar seleções
+    document.querySelectorAll(`input[name="tamanho_${categoria}"]`).forEach(radio => radio.checked = false);
+    document.querySelectorAll(`input[name="sabor_${categoria}"]`).forEach(radio => radio.checked = false);
+    
+    // Esconder resumo e botão
+    document.getElementById(`resumoItem_${categoria}`).style.display = 'none';
+    document.getElementById(`btnAdicionar_${categoria}`).style.display = 'none';
+}
+
+
 
 // Função para mostrar seleção de produtos de outras categorias
 function mostrarSelecaoProdutos(produtos) {

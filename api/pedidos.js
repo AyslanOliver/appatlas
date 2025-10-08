@@ -49,9 +49,20 @@ export default async function handler(req, res) {
                 return res.status(200).json({ message: 'Pedido atualizado com sucesso' });
 
             case 'DELETE':
-                const { id: idDelete } = req.query;
-                await collection.deleteOne({ _id: new ObjectId(idDelete) });
-                return res.status(200).json({ message: 'Pedido deletado com sucesso' });
+                const { id: idDelete, deleteAll } = req.query;
+                
+                if (deleteAll === 'true') {
+                    // Apagar todos os pedidos
+                    const resultado = await collection.deleteMany({});
+                    return res.status(200).json({ 
+                        message: `${resultado.deletedCount} pedidos foram apagados com sucesso`,
+                        deletedCount: resultado.deletedCount
+                    });
+                } else {
+                    // Apagar um pedido específico
+                    await collection.deleteOne({ _id: new ObjectId(idDelete) });
+                    return res.status(200).json({ message: 'Pedido deletado com sucesso' });
+                }
 
             default:
                 return res.status(405).json({ error: 'Método não permitido' });

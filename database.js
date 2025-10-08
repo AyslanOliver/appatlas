@@ -180,10 +180,17 @@ const produtoQueries = {
                     ]
                 };
             }
-            return await db.collection('produtos')
+            const produtos = await db.collection('produtos')
                 .find(filtro)
                 .sort({ categoria: 1, nome: 1 })
                 .toArray();
+            
+            // Converter _id para id para compatibilidade com o frontend
+            return produtos.map(produto => ({
+                ...produto,
+                id: produto._id.toString(),
+                _id: undefined
+            }));
         } catch (error) {
             throw error;
         }
@@ -192,7 +199,18 @@ const produtoQueries = {
     async getById(id) {
         try {
             const { ObjectId } = require('mongodb');
-            return await db.collection('produtos').findOne({ _id: new ObjectId(id) });
+            const produto = await db.collection('produtos').findOne({ _id: new ObjectId(id) });
+            
+            if (produto) {
+                // Converter _id para id para compatibilidade com o frontend
+                return {
+                    ...produto,
+                    id: produto._id.toString(),
+                    _id: undefined
+                };
+            }
+            
+            return produto;
         } catch (error) {
             throw error;
         }
@@ -335,6 +353,12 @@ const pedidoQueries = {
     async delete(id) {
         try {
             const { ObjectId } = require('mongodb');
+            
+            // Verificar se o ID é válido antes de tentar converter
+            if (!id || (typeof id === 'string' && id.length !== 24)) {
+                throw new Error('ID inválido');
+            }
+            
             const result = await db.collection('pedidos').deleteOne({ _id: new ObjectId(id) });
             
             if (result.deletedCount === 0) {
@@ -343,6 +367,22 @@ const pedidoQueries = {
             
             return { success: true };
         } catch (error) {
+            console.error('Erro na função delete:', error);
+            throw error;
+        }
+    },
+
+    async deleteAll() {
+        try {
+            const result = await db.collection('pedidos').deleteMany({});
+            
+            return { 
+                success: true, 
+                deletedCount: result.deletedCount,
+                message: `${result.deletedCount} pedidos foram apagados com sucesso`
+            };
+        } catch (error) {
+            console.error('Erro na função deleteAll:', error);
             throw error;
         }
     }

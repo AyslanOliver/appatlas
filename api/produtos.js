@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
@@ -21,7 +21,13 @@ export default async function handler(req, res) {
         switch (req.method) {
             case 'GET':
                 const produtos = await collection.find({}).toArray();
-                return res.status(200).json(produtos);
+                // Converter _id para id para compatibilidade com o frontend
+                const produtosFormatados = produtos.map(produto => ({
+                    ...produto,
+                    id: produto._id.toString(),
+                    _id: undefined
+                }));
+                return res.status(200).json(produtosFormatados);
 
             case 'POST':
                 const { tipo, ...dados } = req.body;
@@ -33,7 +39,7 @@ export default async function handler(req, res) {
                 };
                 const resultado = await collection.insertOne(novoProduto);
                 return res.status(201).json({ 
-                    id: resultado.insertedId, 
+                    id: resultado.insertedId.toString(), 
                     ...novoProduto 
                 });
 
