@@ -15,6 +15,15 @@
     <allow-intent href="mailto:*" />
     <allow-intent href="geo:*" />
     
+    <!-- Whitelist para acesso à API -->
+    <allow-navigation href="*" />
+    <access origin="*" />
+    <access origin="https://pizzaria-app-atlas.vercel.app" />
+    <access origin="http://localhost:3000" />
+    
+    <!-- CSP Meta tag -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:; connect-src 'self' https://pizzaria-app-atlas.vercel.app http://localhost:3000;" />
+    
     <!-- Configurações de plataforma -->
     <platform name="android">
         <allow-intent href="market:*" />

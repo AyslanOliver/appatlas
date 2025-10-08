@@ -235,3 +235,6 @@ function mostrarErro(mensagem) {
 function atualizarDashboard() {
     carregarDashboard();
 }
+
+// Tornar a função disponível globalmente para uso no HTML
+window.atualizarDashboard = atualizarDashboard;

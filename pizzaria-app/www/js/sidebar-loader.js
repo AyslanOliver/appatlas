@@ -1,112 +1,103 @@
-// Script para carregar o sidebar dinamicamente
-
-// Função para carregar o sidebar de forma compatível com Cordova
+// Função para carregar o sidebar
 async function loadSidebar() {
     try {
         const response = await fetch('components/sidebar.html');
         if (!response.ok) {
-            throw new Error('Erro ao carregar sidebar');
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         return await response.text();
     } catch (error) {
-        console.error('Erro ao carregar sidebar via fetch, tentando método alternativo:', error);
-        
-        // Fallback: retornar HTML do sidebar diretamente
+        console.warn('Erro ao carregar sidebar.html, usando fallback:', error);
+        // Fallback HTML hardcoded
         return `
-<!-- Sidebar -->
-<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
-    <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
-        <div class="sidebar-brand-icon rotate-n-15">
-            <i class="fas fa-pizza-slice"></i>
-        </div>
-        <div class="sidebar-brand-text mx-3">Pizzaria Atlas</div>
-    </a>
-
-    <!-- Divider -->
-    <hr class="sidebar-divider my-0">
-
-    <!-- Nav Item - Dashboard -->
-    <li class="nav-item">
-        <a class="nav-link" href="index.html">
-            <i class="fas fa-fw fa-tachometer-alt"></i>
-            <span>Dashboard</span>
-        </a>
-    </li>
-
-    <!-- Divider -->
-    <hr class="sidebar-divider">
-
-    <!-- Heading -->
-    <div class="sidebar-heading">
-        Pedidos
-    </div>
-
-    <!-- Nav Item - Novo Pedido -->
-    <li class="nav-item">
-        <a class="nav-link" href="novo-pedido.html">
-            <i class="fas fa-fw fa-plus"></i>
-            <span>Novo Pedido</span>
-        </a>
-    </li>
-
-    <!-- Nav Item - Lista de Pedidos -->
-    <li class="nav-item">
-        <a class="nav-link" href="lista-pedidos.html">
-            <i class="fas fa-fw fa-list"></i>
-            <span>Lista de Pedidos</span>
-        </a>
-    </li>
-
-    <!-- Divider -->
-    <hr class="sidebar-divider">
-
-    <!-- Heading -->
-    <div class="sidebar-heading">
-        Gestão
-    </div>
-
-    <!-- Nav Item - Produtos -->
-    <li class="nav-item">
-        <a class="nav-link" href="produtos.html">
-            <i class="fas fa-fw fa-box"></i>
-            <span>Produtos</span>
-        </a>
-    </li>
-
-    <!-- Nav Item - Configurações -->
-    <li class="nav-item">
-        <a class="nav-link" href="configuracoes.html">
-            <i class="fas fa-fw fa-cog"></i>
-            <span>Configurações</span>
-        </a>
-    </li>
-
-    <!-- Divider -->
-    <hr class="sidebar-divider d-none d-md-block">
-
-    <!-- Sidebar Toggler (Sidebar) -->
-    <div class="text-center d-none d-md-inline">
-        <button class="rounded-circle border-0" id="sidebarToggle"></button>
-    </div>
-</ul>
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+                <div class="sidebar-brand-icon rotate-n-15">
+                    <i class="fas fa-pizza-slice"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">Pizzaria Atlas</div>
+            </a>
+            <hr class="sidebar-divider my-0">
+            <li class="nav-item active">
+                <a class="nav-link" href="index.html">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">Gestão</div>
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+                    <i class="fas fa-fw fa-shopping-cart"></i>
+                    <span>Pedidos</span>
+                </a>
+                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">Gerenciar Pedidos:</h6>
+                        <a class="collapse-item" href="pedidos.html">Ver Pedidos</a>
+                        <a class="collapse-item" href="novo-pedido.html">Novo Pedido</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities" aria-expanded="true" aria-controls="collapseUtilities">
+                    <i class="fas fa-fw fa-pizza-slice"></i>
+                    <span>Produtos</span>
+                </a>
+                <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <h6 class="collapse-header">Gerenciar Produtos:</h6>
+                        <a class="collapse-item" href="produtos.html">Ver Produtos</a>
+                        <a class="collapse-item" href="novo-produto.html">Novo Produto</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="clientes.html">
+                    <i class="fas fa-fw fa-users"></i>
+                    <span>Clientes</span>
+                </a>
+            </li>
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">Relatórios</div>
+            <li class="nav-item">
+                <a class="nav-link" href="relatorios.html">
+                    <i class="fas fa-fw fa-chart-area"></i>
+                    <span>Relatórios</span>
+                </a>
+            </li>
+            <hr class="sidebar-divider d-none d-md-block">
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+        </ul>
         `;
     }
 }
 
-// Função para configurar eventos do sidebar com JavaScript nativo
+// Função para marcar o item ativo no menu
+function markActiveNavItem() {
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+    
+    navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        const parentLi = link.closest('.nav-item');
+        
+        if (href === currentPage) {
+            parentLi.classList.add('active');
+        } else {
+            parentLi.classList.remove('active');
+        }
+    });
+}
+
+// Função para configurar eventos do sidebar usando JavaScript nativo
 function setupSidebarEvents() {
     console.log('Configurando eventos do sidebar...');
     
-    // Encontrar botões de toggle
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const sidebarToggleTop = document.getElementById('sidebarToggleTop');
-    
-    // Função para toggle do sidebar
-    function toggleSidebar(e) {
-        e.preventDefault();
-        console.log('Toggle sidebar clicado');
-        
+    // Função para alternar o sidebar
+    function toggleSidebar() {
         const body = document.body;
         const sidebar = document.querySelector('.sidebar');
         
@@ -114,33 +105,31 @@ function setupSidebarEvents() {
             body.classList.toggle('sidebar-toggled');
             sidebar.classList.toggle('toggled');
             
-            // Fechar menus collapse se sidebar for fechado
-            if (sidebar.classList.contains('toggled')) {
-                const collapseElements = sidebar.querySelectorAll('.collapse.show');
-                collapseElements.forEach(element => {
-                    element.classList.remove('show');
+            // Fechar menus collapse quando sidebar é fechado
+            if (body.classList.contains('sidebar-toggled')) {
+                const collapseElements = document.querySelectorAll('.sidebar .collapse.show');
+                collapseElements.forEach(collapse => {
+                    collapse.classList.remove('show');
                 });
             }
-            
-            console.log('Sidebar toggled. Classes:', {
-                body: body.className,
-                sidebar: sidebar.className
-            });
         }
     }
     
-    // Adicionar eventos aos botões
+    // Event listeners para botões de toggle
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarToggleTop = document.getElementById('sidebarToggleTop');
+    
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', toggleSidebar);
-        console.log('Evento adicionado ao sidebarToggle');
+        console.log('Event listener adicionado ao sidebarToggle');
     }
     
     if (sidebarToggleTop) {
         sidebarToggleTop.addEventListener('click', toggleSidebar);
-        console.log('Evento adicionado ao sidebarToggleTop');
+        console.log('Event listener adicionado ao sidebarToggleTop');
     }
     
-    // Adicionar eventos de redimensionamento
+    // Event listener para redimensionamento da janela
     window.addEventListener('resize', function() {
         const windowWidth = window.innerWidth;
         const body = document.body;
@@ -149,26 +138,40 @@ function setupSidebarEvents() {
         if (windowWidth < 768) {
             // Fechar menus collapse em telas pequenas
             const collapseElements = document.querySelectorAll('.sidebar .collapse.show');
-            collapseElements.forEach(element => {
-                element.classList.remove('show');
+            collapseElements.forEach(collapse => {
+                collapse.classList.remove('show');
             });
         }
         
-        // Auto-toggle em telas muito pequenas
         if (windowWidth < 480 && sidebar && !sidebar.classList.contains('toggled')) {
+            // Auto-toggle sidebar em telas muito pequenas
             body.classList.add('sidebar-toggled');
             sidebar.classList.add('toggled');
+            
+            const collapseElements = document.querySelectorAll('.sidebar .collapse.show');
+            collapseElements.forEach(collapse => {
+                collapse.classList.remove('show');
+            });
         }
     });
 }
 
+// Inicialização quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', function() {
-    const sidebarContainer = document.getElementById('sidebar-container');
+    console.log('=== DEBUG SIDEBAR ===');
+    console.log('DOM carregado, iniciando sidebar-loader');
+    console.log('Protocolo:', window.location.protocol);
+    console.log('Hostname:', window.location.hostname);
+    console.log('User Agent:', navigator.userAgent);
     
+    const sidebarContainer = document.getElementById('sidebar-container');
     if (sidebarContainer) {
+        console.log('Container do sidebar encontrado');
+        
         // Tentar carregar o sidebar
         loadSidebar()
             .then(html => {
+                console.log('Sidebar carregado com sucesso');
                 sidebarContainer.innerHTML = html;
                 
                 // Configurar eventos do sidebar (com fallback para JavaScript nativo)
@@ -176,6 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Reativar os eventos do Bootstrap se jQuery estiver disponível
                 if (typeof $ !== 'undefined') {
+                    console.log('jQuery disponível, configurando eventos Bootstrap');
                     // Reativar collapse
                     $('[data-toggle="collapse"]').collapse();
                     
@@ -192,21 +196,21 @@ document.addEventListener('DOMContentLoaded', function() {
                             $('.sidebar .collapse').collapse('hide');
                         }
                     });
+                } else {
+                    console.log('jQuery não disponível, usando apenas JavaScript nativo');
                 }
                 
-                // Marcar item ativo baseado na URL atual
-                const currentPage = window.location.pathname.split('/').pop();
-                const navLinks = document.querySelectorAll('.sidebar .nav-link');
-                
-                navLinks.forEach(link => {
-                    const href = link.getAttribute('href');
-                    if (href && href === currentPage) {
-                        link.closest('.nav-item').classList.add('active');
-                    }
-                });
+                // Marcar item ativo
+                markActiveNavItem();
+                console.log('Sidebar inicializado completamente');
             })
             .catch(error => {
                 console.error('Erro ao carregar sidebar:', error);
+                // Mesmo com erro, tentar configurar eventos
+                setupSidebarEvents();
             });
+    } else {
+        console.error('Container do sidebar NÃO encontrado!');
     }
+    console.log('=== FIM DEBUG SIDEBAR ===');
 });

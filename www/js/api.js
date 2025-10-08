@@ -23,6 +23,9 @@ const API_URL = getApiUrl();
 
 // Debug: Log da configuração da API
 console.log('API_URL configurado:', API_URL);
+console.log('Protocolo atual:', window.location.protocol);
+console.log('Hostname atual:', window.location.hostname);
+console.log('Ambiente detectado:', window.location.protocol === 'file:' ? 'Cordova' : 'Web');
 
 // Função para testar a conexão com a API
 async function testarConexao() {
@@ -97,20 +100,31 @@ export async function deletarProduto(tipo, id) {
 
 export async function getPedidos() {
     try {
-        console.log('Fazendo requisição para:', `${API_URL}/api/pedidos`);
-        const response = await fetch(`${API_URL}/api/pedidos`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
+        const url = `${API_URL}/api/pedidos`;
+        console.log('=== DEBUG getPedidos ===');
+        console.log('URL da requisição:', url);
+        console.log('API_URL base:', API_URL);
+        console.log('Protocolo:', window.location.protocol);
+        
+        const response = await fetch(url);
         console.log('Response status:', response.status);
-        if (!response.ok) throw new Error(`Erro ao buscar pedidos: ${response.status}`);
+        console.log('Response headers:', response.headers);
+        
+        if (!response.ok) {
+            console.error('Erro HTTP:', response.status, response.statusText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         console.log('Dados recebidos:', data);
+        console.log('=== FIM DEBUG getPedidos ===');
         return data;
     } catch (error) {
-        console.error('Erro completo:', error);
+        console.error('=== ERRO getPedidos ===');
+        console.error('Erro ao buscar pedidos:', error);
+        console.error('Tipo do erro:', error.name);
+        console.error('Mensagem:', error.message);
+        console.error('=== FIM ERRO ===');
         throw error;
     }
 }
