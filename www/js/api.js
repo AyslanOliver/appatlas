@@ -1,9 +1,28 @@
 // Arquivo para gerenciar as chamadas à API
 // Configuração da API
 // Detecta automaticamente se está em produção ou desenvolvimento
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? 'http://localhost:3000' 
-    : window.location.origin;
+function getApiUrl() {
+    // Se estiver rodando no Cordova (protocolo file:), usar sempre a API do Vercel
+    if (window.location.protocol === 'file:') {
+        return 'https://pizzaria-app-atlas.vercel.app';
+    }
+    
+    const hostname = window.location.hostname;
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+    
+    if (isLocal) {
+        // Em desenvolvimento local, sempre usar porta 3000 para a API
+        return 'http://localhost:3000';
+    } else {
+        // Em produção, usar a mesma origem
+        return window.location.origin;
+    }
+}
+
+const API_URL = getApiUrl();
+
+// Debug: Log da configuração da API
+console.log('API_URL configurado:', API_URL);
 
 // Função para testar a conexão com a API
 async function testarConexao() {
@@ -92,6 +111,26 @@ export async function getPedidos() {
         return data;
     } catch (error) {
         console.error('Erro completo:', error);
+        throw error;
+    }
+}
+
+export async function getPedidoById(id) {
+    try {
+        const url = `${API_URL}/api/pedidos/${id}`;
+        console.log('getPedidoById - URL:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (!response.ok) throw new Error(`Erro ao buscar pedido: ${response.status}`);
+        return await response.json();
+    } catch (error) {
+        console.error('getPedidoById - Erro:', error);
         throw error;
     }
 }

@@ -24,6 +24,7 @@
     ]
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.3",
     "@fortawesome/fontawesome-free": "^7.1.0",
     "bootstrap": "^5.3.8",
     "cors": "^2.8.5",

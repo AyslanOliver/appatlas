@@ -192,8 +192,28 @@ app.get('/api/configuracoes', async (req, res) => {
         if (!dbConnected) {
             return res.status(503).json({ error: 'Banco de dados não conectado' });
         }
+        
         const configuracoes = await configQueries.getAll();
-        res.json(configuracoes);
+        console.log('Configurações brutas do banco:', configuracoes);
+        
+        // Converter array de configurações para objeto estruturado
+        const configEstruturada = {};
+        
+        configuracoes.forEach(config => {
+            try {
+                // Tentar fazer parse do valor se for JSON
+                const valor = config.valor.startsWith('{') || config.valor.startsWith('[') 
+                    ? JSON.parse(config.valor) 
+                    : config.valor;
+                configEstruturada[config.chave] = valor;
+            } catch (parseError) {
+                // Se não conseguir fazer parse, usar valor como string
+                configEstruturada[config.chave] = config.valor;
+            }
+        });
+        
+        console.log('Configurações estruturadas:', configEstruturada);
+        res.json(configEstruturada);
     } catch (error) {
         console.error('Erro ao buscar configurações:', error);
         res.status(500).json({ error: 'Erro interno do servidor' });
@@ -217,6 +237,32 @@ app.put('/api/configuracoes', async (req, res) => {
     } catch (error) {
         console.error('Erro ao atualizar configurações:', error);
         res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+});
+
+app.post('/api/configuracoes', async (req, res) => {
+    try {
+        if (!dbConnected) {
+            return res.status(503).json({ error: 'Banco de dados não conectado' });
+        }
+        
+        console.log('Dados recebidos para salvar:', req.body);
+        
+        // Converter objeto para array de configurações
+        const configuracoes = Object.entries(req.body).map(([chave, valor]) => ({
+            chave,
+            valor: typeof valor === 'object' ? JSON.stringify(valor) : String(valor)
+        }));
+        
+        console.log('Configurações processadas:', configuracoes);
+        
+        await configQueries.updateMultiple(configuracoes);
+        
+        console.log('Configurações salvas com sucesso');
+        res.json({ success: true, message: 'Configurações salvas com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao salvar configurações:', error);
+        res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
     }
 });
 
@@ -298,13 +344,20 @@ initializeServer();
 app.listen(PORT, () => {
     console.log(`🚀 Servidor da API rodando em http://localhost:${PORT}`);
     console.log(`📋 Endpoints disponíveis:`);
-    console.log(`   GET  /api/pedidos`);
-    console.log(`   POST /api/pedidos`);
-    console.log(`   GET  /api/produtos`);
-    console.log(`   POST /api/produtos`);
-    console.log(`   GET  /api/configuracoes`);
-    console.log(`   PUT  /api/configuracoes`);
-    console.log(`   POST /api/impressora`);
-    console.log(`   POST /api/impressora/teste`);
-    console.log(`   GET  /api/cardapio`);
+    console.log(`   GET    /api/pedidos`);
+    console.log(`   GET    /api/pedidos/:id`);
+    console.log(`   POST   /api/pedidos`);
+    console.log(`   PUT    /api/pedidos/:id`);
+    console.log(`   DELETE /api/pedidos/:id`);
+    console.log(`   GET    /api/produtos`);
+    console.log(`   GET    /api/produtos/:id`);
+    console.log(`   POST   /api/produtos`);
+    console.log(`   PUT    /api/produtos/:id`);
+    console.log(`   DELETE /api/produtos/:id`);
+    console.log(`   GET    /api/configuracoes`);
+    console.log(`   PUT    /api/configuracoes`);
+    console.log(`   POST   /api/configuracoes`);
+    console.log(`   POST   /api/impressora`);
+    console.log(`   POST   /api/impressora/teste`);
+    console.log(`   GET    /api/cardapio`);
 });

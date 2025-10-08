@@ -1,4 +1,4 @@
-import { getPedidos, atualizarPedido } from './api.js';
+import { getPedidos, getPedidoById, atualizarPedido, deletarPedido } from './api.js';
 import { GerenciadorImpressao } from './impressora-pos58.js';
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -34,11 +34,14 @@ async function carregarPedidos() {
 
         // Limpar tabela
         console.log('🧹 Limpando tabela...');
+        const mobileContainer = document.getElementById('pedidosMobile');
         tbody.innerHTML = '';
+        mobileContainer.innerHTML = '';
 
-        if (!pedidos || pedidos.length === 0) {
+        if (!pedidosFiltrados || pedidosFiltrados.length === 0) {
             console.log('⚠️ Nenhum pedido para exibir');
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum pedido encontrado</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum pedido encontrado</td></tr>';
+            mobileContainer.innerHTML = '<div class="text-center p-3">Nenhum pedido encontrado</div>';
             return;
         }
 
@@ -46,6 +49,7 @@ async function carregarPedidos() {
         console.log('🎨 Renderizando pedidos na tabela...');
         pedidos.forEach((pedido, index) => {
             console.log(`📝 Processando pedido ${index}:`, pedido);
+            // Renderizar linha da tabela (desktop)
             const tr = document.createElement('tr');
             
             // Definir classe de cor baseada no status
@@ -115,7 +119,59 @@ async function carregarPedidos() {
         `;
 
             tbody.appendChild(tr);
-            console.log(`✅ Pedido ${index} adicionado à tabela`);
+
+            // Renderizar card mobile
+            const mobileCard = document.createElement('div');
+            mobileCard.className = `pedido-card status-${pedido.status}`;
+            
+            mobileCard.innerHTML = `
+                <div class="pedido-header">
+                    <span class="pedido-id">#${pedido._id ? pedido._id.slice(-6) : index + 1}</span>
+                    <span class="pedido-valor">R$ ${valorTotal.toFixed(2)}</span>
+                </div>
+                
+                <div class="pedido-info">
+                    <div class="pedido-info-item">
+                        <span class="pedido-info-label">Cliente:</span>
+                        <span class="pedido-info-value">${pedido.cliente.nome}</span>
+                    </div>
+                    <div class="pedido-info-item">
+                        <span class="pedido-info-label">Itens:</span>
+                        <span class="pedido-info-value">${descricaoItens}</span>
+                    </div>
+                    <div class="pedido-info-item">
+                        <span class="pedido-info-label">Data:</span>
+                        <span class="pedido-info-value">${formatarData(pedido.dataPedido)}</span>
+                    </div>
+                </div>
+                
+                <div class="pedido-status-mobile">
+                    <select class="form-control status-select" data-pedido-id="${pedido._id}" data-status-atual="${pedido.status}">
+                        <option value="pendente" ${pedido.status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                        <option value="preparo" ${pedido.status === 'preparo' ? 'selected' : ''}>Em Preparo</option>
+                        <option value="entrega" ${pedido.status === 'entrega' ? 'selected' : ''}>Saiu para Entrega</option>
+                        <option value="entregue" ${pedido.status === 'entregue' ? 'selected' : ''}>Entregue</option>
+                    </select>
+                </div>
+                
+                <div class="pedido-actions-mobile">
+                    <button class="btn btn-primary btn-sm" onclick="mostrarDetalhesPedido('${pedido._id}')" title="Ver Detalhes">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-success btn-sm" onclick="imprimirPedido('${pedido._id}')" title="Imprimir">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="encaminharWhatsApp('${pedido._id}')" title="WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="apagarPedido('${pedido._id}')" title="Apagar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            mobileContainer.appendChild(mobileCard);
+            console.log(`✅ Pedido ${index} adicionado à tabela e mobile`);
         });
 
         console.log('🎉 Todos os pedidos foram renderizados com sucesso!');
@@ -357,34 +413,10 @@ async function apagarPedido(id) {
     }
 
     try {
-        const response = await fetch(`/api/pedidos/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.ok) {
-            mostrarMensagemSucesso('Pedido apagado com sucesso!');
-            // Recarregar a lista de pedidos
-            carregarPedidos();
-        } else {
-            // Verificar se a resposta tem conteúdo antes de tentar fazer parse JSON
-            let errorMessage = 'Erro desconhecido';
-            try {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const error = await response.json();
-                    errorMessage = error.message || errorMessage;
-                } else {
-                    const textError = await response.text();
-                    errorMessage = textError || `Erro HTTP ${response.status}`;
-                }
-            } catch (parseError) {
-                errorMessage = `Erro HTTP ${response.status}`;
-            }
-            alert(`Erro ao apagar pedido: ${errorMessage}`);
-        }
+        await deletarPedido(id);
+        mostrarMensagemSucesso('Pedido apagado com sucesso!');
+        // Recarregar a lista de pedidos
+        carregarPedidos();
     } catch (error) {
         console.error('Erro ao apagar pedido:', error);
         alert(`Erro ao apagar pedido: ${error.message || 'Verifique sua conexão.'}`);
@@ -395,12 +427,7 @@ async function apagarPedido(id) {
 async function encaminharWhatsApp(id) {
     try {
         // Buscar os detalhes do pedido
-        const response = await fetch(`/api/pedidos/${id}`);
-        if (!response.ok) {
-            throw new Error('Erro ao buscar detalhes do pedido');
-        }
-        
-        const pedido = await response.json();
+        const pedido = await getPedidoById(id);
         
         // Gerar mensagem do pedido
         let mensagem = `🍕 *PEDIDO #${pedido._id.slice(-6)}*\n\n`;

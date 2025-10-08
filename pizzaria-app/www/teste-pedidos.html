@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Pedidos</title>
+</head>
+<body>
+    <h1>Teste de API - Pedidos</h1>
+    <button onclick="testarPedidos()">Testar Pedidos</button>
+    <div id="resultado"></div>
+
+    <script>
+        async function testarPedidos() {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = 'Testando pedidos...';
+            
+            try {
+                console.log('Fazendo requisição para pedidos...');
+                const response = await fetch('http://localhost:3000/api/pedidos', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                console.log('Response:', response);
+                console.log('Status:', response.status);
+                console.log('Headers:', response.headers);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Data:', data);
+                resultado.innerHTML = `<p style="color: green;">Sucesso! Encontrados ${data.length} pedidos</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                console.error('Erro completo:', error);
+                resultado.innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`;
+            }
+        }
+        
+        // Testar automaticamente ao carregar a página
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(testarPedidos, 1000);
+        });
+    </script>
+</body>
+</html>
