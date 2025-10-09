@@ -1,33 +1,51 @@
 import axios from 'axios';
 
-// Configuração da API
+// Configuração da API - função que retorna a URL baseada no ambiente atual
 function getApiUrl() {
-    // Se estiver rodando no Cordova (protocolo file:), usar o servidor local
-    if (window.location.protocol === 'file:') {
-        return 'http://localhost:3001';
+    console.log('=== DEBUG getApiUrl ===');
+    
+    // Se estiver rodando no Cordova (protocolo file:), usar a API do InfinityFree
+    if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
+        console.log('Ambiente detectado: Cordova');
+        return 'https://rotaexpress.free.nf'; // URL do seu domínio
     }
     
-    const hostname = window.location.hostname;
-    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
-    
-    if (isLocal) {
-        // Em desenvolvimento local, usar o servidor local
-        return 'http://localhost:3001';
-    } else if (hostname === 'rotaexpress.free.nf') {
-        // Em produção no InfinityFree, usar a API local
-        return 'https://rotaexpress.free.nf/api';
-    } else {
-        // Outros ambientes de produção (Vercel, etc.)
-        return 'https://appatlas-afusc3hg5-ayslanoons-projects.vercel.app/api';
+    // Detectar o ambiente baseado no hostname
+    if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        const port = window.location.port;
+        
+        console.log('Hostname:', hostname);
+        console.log('Protocol:', protocol);
+        console.log('Port:', port);
+        
+        // Para desenvolvimento local, usar servidor local
+        const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+        if (isLocal) {
+            console.log('Ambiente detectado: Local');
+            const apiUrl = 'http://localhost:3001';
+            console.log('URL da API retornada:', apiUrl);
+            return apiUrl;
+        }
+        
+        // Se estiver no InfinityFree, usar a API local
+        if (hostname.includes('infinityfreeapp.com') || hostname.includes('epizy.com') || hostname === 'rotaexpress.free.nf') {
+            console.log('Ambiente detectado: InfinityFree');
+            return window.location.origin;
+        }
     }
+    
+    // Fallback para InfinityFree
+    console.log('Ambiente detectado: Fallback');
+    return 'https://rotaexpress.free.nf'; // URL do seu domínio
 }
 
-const API_URL = getApiUrl();
-
 // Configuração do axios
+const API_URL = getApiUrl();
 const api = axios.create({
     baseURL: API_URL,
-    timeout: 10000,
+    timeout: 15000, // Aumentado para InfinityFree
     headers: {
         'Content-Type': 'application/json',
     }
@@ -35,19 +53,25 @@ const api = axios.create({
 
 // Debug: Log da configuração da API
 console.log('API_URL configurado:', API_URL);
-console.log('Protocolo atual:', window.location.protocol);
-console.log('Hostname atual:', window.location.hostname);
-console.log('Ambiente detectado:', window.location.protocol === 'file:' ? 'Cordova' : 'Web');
+if (typeof window !== 'undefined') {
+    console.log('Protocolo atual:', window.location.protocol);
+    console.log('Hostname atual:', window.location.hostname);
+    console.log('Ambiente detectado:', 
+        window.location.protocol === 'file:' ? 'Cordova' : 
+        window.location.hostname.includes('infinityfreeapp.com') || window.location.hostname.includes('epizy.com') || window.location.hostname === 'rotaexpress.free.nf' ? 'InfinityFree' : 
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'Local' : 'Outro'
+    );
+}
+console.log('Build timestamp:', new Date().toISOString());
 
 // Função para testar a conexão com a API
 export const testarConexao = async () => {
     try {
-        await api.get('/api/produtos');
-        console.log('Conexão com a API estabelecida com sucesso!');
-        return true;
+        const response = await api.get('/api/test');
+        return response.data;
     } catch (error) {
-        console.error('Erro de conexão:', error);
-        throw new Error('Erro ao conectar com o servidor. Verifique se a API está rodando.');
+        console.error('Erro ao testar conexão:', error);
+        throw error;
     }
 };
 
