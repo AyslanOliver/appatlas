@@ -1,5 +1,22 @@
 # 🔧 Correções Aplicadas - rotaexpress.free.nf
 
+## ✅ Correções do CORS e API (Aplicadas em 2025-01-14)
+
+### Problema Identificado
+- Erro de CORS: aplicação tentando acessar API do Vercel em vez da API local do InfinityFree
+- URLs da API não configuradas corretamente para o domínio `rotaexpress.free.nf`
+
+### Correções Aplicadas
+1. **api.js**: Atualizada função `getApiUrl()` para detectar corretamente o domínio do InfinityFree
+2. **Configuração da API**: Quando `hostname === 'rotaexpress.free.nf'`, usar `https://rotaexpress.free.nf/api`
+3. **Build atualizado**: Gerado novo build com hash `main.e2aa2f36.js` contendo as correções
+
+### Arquivos Atualizados
+- `/static/js/main.e2aa2f36.js` (novo arquivo com correções de API)
+- `index.html` (atualizado para referenciar o novo arquivo JS)
+
+---
+
 ## ✅ Correções do Sidebar (Aplicadas em 2025-01-14)
 
 ### Problema Identificado
@@ -12,7 +29,7 @@
 3. **Build atualizado**: Gerado novo build com hash `main.38314f54.js` contendo as correções
 
 ### Arquivos Atualizados
-- `/static/js/main.38314f54.js` (novo arquivo com correções)
+- `/static/js/main.38314f54.js` (arquivo anterior com correções do sidebar)
 - `index.html` (atualizado para referenciar o novo arquivo JS)
 
 ---

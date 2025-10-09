@@ -13,9 +13,12 @@ function getApiUrl() {
     if (isLocal) {
         // Em desenvolvimento local, usar o servidor local
         return 'http://localhost:3001';
+    } else if (hostname === 'rotaexpress.free.nf') {
+        // Em produção no InfinityFree, usar a API local
+        return 'https://rotaexpress.free.nf/api';
     } else {
-        // Em produção, usar o servidor local (ou configurar para InfinityFree quando hospedado)
-        return 'http://localhost:3001';
+        // Outros ambientes de produção (Vercel, etc.)
+        return 'https://appatlas-afusc3hg5-ayslanoons-projects.vercel.app/api';
     }
 }
 
