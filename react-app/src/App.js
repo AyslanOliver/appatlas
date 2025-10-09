@@ -20,7 +20,7 @@ function App() {
   return (
     <Router>
       <div id="wrapper">
-        <Sidebar />
+        <Sidebar isToggled={sidebarToggled} onToggle={handleSidebarToggle} />
         
         <div id="content-wrapper" className="d-flex flex-column">
           <div id="content">

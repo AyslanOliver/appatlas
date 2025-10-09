@@ -1,13 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-const Sidebar = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar = ({ isToggled, onToggle }) => {
   const location = useLocation();
-
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
-  };
 
   const isActive = (path) => {
     return location.pathname === path || 
@@ -15,7 +10,7 @@ const Sidebar = () => {
   };
 
   return (
-    <ul className={`navbar-nav bg-gradient-primary sidebar sidebar-dark accordion ${isCollapsed ? 'toggled' : ''}`} 
+    <ul className={`navbar-nav bg-gradient-primary sidebar sidebar-dark accordion ${isToggled ? 'toggled' : ''}`} 
         id="accordionSidebar">
       
       {/* Sidebar - Brand */}
@@ -101,7 +96,7 @@ const Sidebar = () => {
         <button 
           className="rounded-circle border-0" 
           id="sidebarToggle"
-          onClick={toggleSidebar}
+          onClick={onToggle}
         ></button>
       </div>
     </ul>

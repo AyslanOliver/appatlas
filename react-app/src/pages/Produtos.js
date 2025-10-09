@@ -125,7 +125,7 @@ const Produtos = () => {
                                 <tbody>
                                     {produtos.map((produto, index) => (
                                         <tr key={produto.id}>
-                                            <td>{index + 1}</td>
+                                            <td>{produto.id}</td>
                                             <td>{produto.nome}</td>
                                             <td>R$ {parseFloat(produto.preco).toFixed(2)}</td>
                                             <td>{produto.descricao || '-'}</td>

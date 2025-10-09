@@ -1,10 +1,16 @@
 {
-  "name": "com.pizzaria.pedidos",
-  "displayName": "PizzariaPedidos",
+  "name": "pizzaria-atlas-api",
+  "displayName": "Pizzaria Atlas API",
   "version": "1.0.0",
-  "description": "A sample Apache Cordova application that responds to the deviceready event.",
+  "description": "API para sistema de gestão da Pizzaria Atlas - Pedidos, Cardápio e Produtos",
   "main": "index.js",
+  "type": "module",
   "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Build completed'",
+    "start": "vercel dev",
+    "server": "node server.js",
+    "deploy": "vercel --prod",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

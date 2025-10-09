@@ -1,0 +1,46 @@
+# Configuração simplificada para InfinityFree - Pizzaria Atlas
+# Versão compatível para evitar erro 403
+
+# Habilitar reescrita de URL
+RewriteEngine On
+
+# Regras básicas para React Router (SPA)
+# Redirecionar rotas não encontradas para index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteRule ^(.*)$ /index.html [L]
+
+# Configurações básicas de CORS para API
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Página inicial padrão
+DirectoryIndex index.html index.php
+
+# Configurações básicas de cache
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType image/png "access plus 1 week"
+    ExpiresByType image/jpg "access plus 1 week"
+    ExpiresByType image/jpeg "access plus 1 week"
+    ExpiresByType image/gif "access plus 1 week"
+</IfModule>
+
+# Proteger arquivos sensíveis (método compatível com InfinityFree)
+<Files "config.php">
+    Require all denied
+</Files>
+
+<Files "database.sql">
+    Require all denied
+</Files>
+
+<Files "*.log">
+    Require all denied
+</Files>

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import BluetoothPrinterManager from '../components/BluetoothPrinterManager';
 
 const Configuracoes = () => {
     const [config, setConfig] = useState({
@@ -7,10 +6,7 @@ const Configuracoes = () => {
         telefone: localStorage.getItem('telefone') || '',
         endereco: localStorage.getItem('endereco') || '',
         taxaEntrega: localStorage.getItem('taxaEntrega') || '0',
-        tempoMedioEntrega: localStorage.getItem('tempoMedioEntrega') || '30',
-        impressoraHabilitada: localStorage.getItem('impressoraHabilitada') === 'true',
-        impressoraNome: localStorage.getItem('impressoraNome') || '',
-        impressoraLargura: localStorage.getItem('impressoraLargura') || '48'
+        tempoMedioEntrega: localStorage.getItem('tempoMedioEntrega') || '30'
     });
 
     const handleSubmit = (e) => {
@@ -114,74 +110,7 @@ const Configuracoes = () => {
                         </div>
                     </div>
 
-                    {/* Seção de Configurações de Impressora */}
-                    <div className="card shadow mb-4">
-                        <div className="card-header py-3">
-                            <h6 className="m-0 font-weight-bold text-primary">
-                                <i className="fas fa-print mr-2"></i>
-                                Configurações de Impressora
-                            </h6>
-                        </div>
-                        <div className="card-body">
-                            <form onSubmit={handleSubmit}>
-                                <div className="form-group">
-                                    <div className="custom-control custom-switch">
-                                        <input
-                                            type="checkbox"
-                                            className="custom-control-input"
-                                            id="impressoraHabilitada"
-                                            checked={config.impressoraHabilitada}
-                                            onChange={(e) => handleChange('impressoraHabilitada', e.target.checked)}
-                                        />
-                                        <label className="custom-control-label" htmlFor="impressoraHabilitada">
-                                            Habilitar Impressora Bluetooth
-                                        </label>
-                                    </div>
-                                    <small className="form-text text-muted">
-                                        Ative para usar impressora POS58 via Bluetooth
-                                    </small>
-                                </div>
 
-                                {config.impressoraHabilitada && (
-                                    <>
-                                        <div className="form-group">
-                                            <label>Nome da Impressora</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                value={config.impressoraNome}
-                                                onChange={(e) => handleChange('impressoraNome', e.target.value)}
-                                                placeholder="Nome da impressora Bluetooth"
-                                            />
-                                            <small className="form-text text-muted">
-                                                Nome da impressora como aparece nas configurações Bluetooth
-                                            </small>
-                                        </div>
-
-                                        <div className="form-group">
-                                            <label>Largura do Papel (caracteres)</label>
-                                            <select
-                                                className="form-control"
-                                                value={config.impressoraLargura}
-                                                onChange={(e) => handleChange('impressoraLargura', e.target.value)}
-                                            >
-                                                <option value="32">32 caracteres (58mm)</option>
-                                                <option value="48">48 caracteres (80mm)</option>
-                                            </select>
-                                            <small className="form-text text-muted">
-                                                Largura do papel da sua impressora térmica
-                                            </small>
-                                        </div>
-                                    </>
-                                )}
-
-                                <button type="submit" className="btn btn-primary">
-                                    <i className="fas fa-save mr-1"></i>
-                                    Salvar Configurações de Impressora
-                                </button>
-                            </form>
-                        </div>
-                    </div>
                 </div>
 
                 <div className="col-lg-4">
@@ -231,20 +160,7 @@ const Configuracoes = () => {
                         </div>
                     </div>
 
-                    {/* Gerenciador de Impressora Bluetooth */}
-                    {config.impressoraHabilitada && (
-                        <div className="card shadow mb-4">
-                            <div className="card-header py-3">
-                                <h6 className="m-0 font-weight-bold text-primary">
-                                    <i className="fas fa-bluetooth mr-2"></i>
-                                    Gerenciar Impressora
-                                </h6>
-                            </div>
-                            <div className="card-body">
-                                <BluetoothPrinterManager showOrderButtons={false} />
-                            </div>
-                        </div>
-                    )}
+
                 </div>
             </div>
         </div>

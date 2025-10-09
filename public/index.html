@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizzaria Atlas API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d32f2f;
+            text-align: center;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #d32f2f;
+        }
+        .method {
+            font-weight: bold;
+            color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍕 Pizzaria Atlas API</h1>
+        <p>API para sistema de gestão da Pizzaria Atlas - Pedidos, Cardápio e Produtos</p>
+        
+        <h2>Endpoints Disponíveis:</h2>
+        
+        <div class="endpoint">
+            <div class="method">GET</div>
+            <strong>/api/cardapio</strong>
+            <p>Retorna o cardápio completo ou filtrado por tipo</p>
+        </div>
+        
+        <div class="endpoint">
+            <div class="method">GET/POST/PUT/DELETE</div>
+            <strong>/api/pedidos</strong>
+            <p>Gerencia pedidos da pizzaria</p>
+        </div>
+        
+        <div class="endpoint">
+            <div class="method">GET/POST/PUT/DELETE</div>
+            <strong>/api/produtos</strong>
+            <p>Gerencia produtos do cardápio</p>
+        </div>
+        
+        <div class="endpoint">
+            <div class="method">GET/POST/PUT/DELETE</div>
+            <strong>/api/configuracoes</strong>
+            <p>Gerencia configurações do sistema</p>
+        </div>
+        
+        <p><strong>Status:</strong> ✅ API Online e Funcionando</p>
+    </div>
+</body>
+</html>

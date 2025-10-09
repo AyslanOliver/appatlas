@@ -21,7 +21,14 @@ export default async function handler(req, res) {
         switch (req.method) {
             case 'GET':
                 const pedidos = await collection.find({}).sort({ criadoEm: -1 }).toArray();
-                return res.status(200).json(pedidos);
+                // Converter _id para id e garantir data_pedido para compatibilidade com o frontend
+                const pedidosFormatados = pedidos.map(pedido => ({
+                    ...pedido,
+                    id: pedido._id.toString(),
+                    data_pedido: pedido.criadoEm || pedido.data_pedido,
+                    _id: undefined
+                }));
+                return res.status(200).json(pedidosFormatados);
 
             case 'POST':
                 const novoPedido = {

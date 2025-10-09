@@ -35,13 +35,6 @@ export default async function handler(req, res) {
             case 'GET':
                 const configuracoes = await collection.findOne({ tipo: 'geral' }) || {
                     tipo: 'geral',
-                    impressora: {
-                        bluetooth: {
-                            habilitado: false,
-                            dispositivo: '',
-                            nome: 'POS58'
-                        }
-                    },
                     pizzaria: {
                         nome: 'Pizzaria Admin',
                         endereco: '',

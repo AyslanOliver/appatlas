@@ -2,20 +2,20 @@ import axios from 'axios';
 
 // Configuração da API
 function getApiUrl() {
-    // Se estiver rodando no Cordova (protocolo file:), usar sempre a API do Vercel
+    // Se estiver rodando no Cordova (protocolo file:), usar o servidor local
     if (window.location.protocol === 'file:') {
-        return 'https://pizzaria-app-atlas.vercel.app';
+        return 'http://localhost:3001';
     }
     
     const hostname = window.location.hostname;
     const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
     
     if (isLocal) {
-        // Em desenvolvimento local, sempre usar porta 3000 para a API
-        return 'http://localhost:3000';
+        // Em desenvolvimento local, usar o servidor local
+        return 'http://localhost:3001';
     } else {
-        // Em produção, usar a mesma origem
-        return window.location.origin;
+        // Em produção, usar o servidor local (ou configurar para InfinityFree quando hospedado)
+        return 'http://localhost:3001';
     }
 }
 

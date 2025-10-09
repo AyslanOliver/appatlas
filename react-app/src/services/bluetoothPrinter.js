@@ -1,375 +1,355 @@
-/**
- * Classe para impressão via Bluetooth em impressoras POS58
- * Funciona tanto em navegadores (Web Bluetooth API) quanto em Android (Cordova)
- */
-class BluetoothPrinter {
+// Serviço de Impressão Bluetooth para Cordova
+class BluetoothPrinterService {
     constructor() {
-        this.device = null;
-        this.characteristic = null;
         this.isConnected = false;
-        this.isAndroid = this.detectAndroid();
+        this.connectedDevice = null;
+        this.bluetoothSerial = null;
+        this.isCordova = false;
         
-        // UUID padrão para impressoras POS (Serial Port Profile)
-        this.SERVICE_UUID = '00001101-0000-1000-8000-00805f9b34fb';
-        this.CHARACTERISTIC_UUID = '00001101-0000-1000-8000-00805f9b34fb';
-    }
-
-    /**
-     * Detecta se está rodando em ambiente Android
-     */
-    detectAndroid() {
-        return window.cordova !== undefined || 
-               (window.device && window.device.platform === 'Android') ||
-               navigator.userAgent.toLowerCase().indexOf('android') > -1;
-    }
-
-    /**
-     * Verifica se Bluetooth está disponível
-     */
-    async isBluetoothAvailable() {
-        if (this.isAndroid) {
-            return new Promise((resolve) => {
-                if (window.bluetoothSerial) {
-                    window.bluetoothSerial.isEnabled(
-                        () => resolve(true),
-                        () => resolve(false)
-                    );
-                } else {
-                    resolve(false);
-                }
+        // Verificar se está rodando no Cordova
+        this.isCordova = !!(window.cordova || window.PhoneGap || window.phonegap);
+        
+        if (this.isCordova) {
+            // Inicializar quando o dispositivo estiver pronto
+            document.addEventListener('deviceready', () => {
+                this.bluetoothSerial = window.bluetoothSerial;
+                console.log('Bluetooth Serial inicializado');
             });
         } else {
-            // Web Bluetooth API
-            if (!navigator.bluetooth) {
-                return false;
-            }
-            try {
-                return await navigator.bluetooth.getAvailability();
-            } catch (error) {
-                console.error('Erro ao verificar Bluetooth:', error);
-                return false;
-            }
+            console.log('Executando no navegador - funcionalidades Bluetooth simuladas');
         }
     }
 
-    /**
-     * Solicita permissão e conecta à impressora
-     */
-    async connect() {
-        try {
-            if (!await this.isBluetoothAvailable()) {
-                throw new Error('Bluetooth não está disponível ou habilitado');
-            }
-
-            if (this.isAndroid) {
-                return await this.connectAndroid();
-            } else {
-                return await this.connectWeb();
-            }
-        } catch (error) {
-            console.error('Erro ao conectar:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Conecta via Web Bluetooth API (navegador)
-     */
-    async connectWeb() {
-        try {
-            console.log('Conectando via Web Bluetooth...');
-            
-            // Solicita dispositivo Bluetooth
-            this.device = await navigator.bluetooth.requestDevice({
-                filters: [
-                    { services: [this.SERVICE_UUID] },
-                    { namePrefix: 'POS' },
-                    { namePrefix: 'Printer' },
-                    { namePrefix: 'BT' }
-                ],
-                optionalServices: [this.SERVICE_UUID]
-            });
-
-            console.log('Dispositivo selecionado:', this.device.name);
-
-            // Conecta ao GATT server
-            const server = await this.device.gatt.connect();
-            console.log('Conectado ao GATT server');
-
-            // Obtém o serviço
-            const service = await server.getPrimaryService(this.SERVICE_UUID);
-            console.log('Serviço obtido');
-
-            // Obtém a característica
-            this.characteristic = await service.getCharacteristic(this.CHARACTERISTIC_UUID);
-            console.log('Característica obtida');
-
-            this.isConnected = true;
-            return { success: true, message: `Conectado à ${this.device.name}` };
-
-        } catch (error) {
-            console.error('Erro na conexão Web Bluetooth:', error);
-            
-            // Tratamento específico para diferentes tipos de erro
-            if (error.name === 'NotFoundError' && error.message.includes('User cancelled')) {
-                throw new Error('Seleção de dispositivo cancelada pelo usuário');
-            } else if (error.name === 'NotFoundError') {
-                throw new Error('Nenhuma impressora encontrada. Verifique se está ligada e pareada.');
-            } else if (error.name === 'NotAllowedError') {
-                throw new Error('Permissão negada. Verifique as configurações do navegador.');
-            } else if (error.name === 'NotSupportedError') {
-                throw new Error('Bluetooth não suportado neste navegador.');
-            } else if (error.name === 'NetworkError') {
-                throw new Error('Erro de conexão. Verifique se a impressora está próxima.');
-            } else {
-                throw new Error(`Erro ao conectar: ${error.message}`);
-            }
-        }
-    }
-
-    /**
-     * Conecta via Cordova Bluetooth Serial (Android)
-     */
-    async connectAndroid() {
+    // Verificar se Bluetooth está disponível
+    isBluetoothAvailable() {
         return new Promise((resolve, reject) => {
-            console.log('Conectando via Cordova Bluetooth...');
+            if (!this.isCordova) {
+                // Simular disponibilidade no navegador
+                resolve(true);
+                return;
+            }
 
-            // Lista dispositivos pareados
-            window.bluetoothSerial.list(
+            if (!this.bluetoothSerial) {
+                reject(new Error('Plugin Bluetooth não disponível'));
+                return;
+            }
+
+            this.bluetoothSerial.isEnabled(
+                () => resolve(true),
+                () => reject(new Error('Bluetooth não está habilitado'))
+            );
+        });
+    }
+
+    // Habilitar Bluetooth
+    enableBluetooth() {
+        return new Promise((resolve, reject) => {
+            if (!this.isCordova) {
+                // Simular habilitação no navegador
+                resolve(true);
+                return;
+            }
+
+            if (!this.bluetoothSerial) {
+                reject(new Error('Plugin Bluetooth não disponível'));
+                return;
+            }
+
+            this.bluetoothSerial.enable(
+                () => resolve(true),
+                (error) => reject(new Error('Erro ao habilitar Bluetooth: ' + error))
+            );
+        });
+    }
+
+    // Listar dispositivos pareados
+    listPairedDevices() {
+        return new Promise((resolve, reject) => {
+            if (!this.isCordova) {
+                // Simular dispositivos no navegador
+                const mockDevices = [
+                    { id: 'mock-printer-1', name: 'Impressora Térmica 1', address: '00:11:22:33:44:55' },
+                    { id: 'mock-printer-2', name: 'Impressora Térmica 2', address: '00:11:22:33:44:66' }
+                ];
+                resolve(mockDevices);
+                return;
+            }
+
+            if (!this.bluetoothSerial) {
+                reject(new Error('Plugin Bluetooth não disponível'));
+                return;
+            }
+
+            this.bluetoothSerial.list(
                 (devices) => {
-                    console.log('Dispositivos encontrados:', devices);
-                    
-                    // Procura por impressoras conhecidas
-                    const printer = devices.find(device => 
-                        device.name && (
-                            device.name.toLowerCase().includes('pos') ||
-                            device.name.toLowerCase().includes('printer') ||
-                            device.name.toLowerCase().includes('bt')
-                        )
-                    );
+                    console.log('Dispositivos pareados:', devices);
+                    resolve(devices);
+                },
+                (error) => reject(new Error('Erro ao listar dispositivos: ' + error))
+            );
+        });
+    }
 
-                    if (!printer) {
-                        reject(new Error('Nenhuma impressora encontrada. Certifique-se de que a impressora está pareada.'));
-                        return;
-                    }
+    // Conectar a um dispositivo
+    connect(deviceId) {
+        return new Promise((resolve, reject) => {
+            if (!this.isCordova) {
+                // Simular conexão no navegador
+                this.isConnected = true;
+                this.connectedDevice = deviceId;
+                resolve(true);
+                return;
+            }
 
-                    // Conecta à impressora
-                    window.bluetoothSerial.connect(
-                        printer.address,
-                        () => {
-                            console.log('Conectado à impressora:', printer.name);
-                            this.device = printer;
-                            this.isConnected = true;
-                            resolve({ 
-                                success: true, 
-                                message: `Conectado à ${printer.name}` 
-                            });
-                        },
-                        (error) => {
-                            console.error('Erro ao conectar:', error);
-                            reject(new Error(`Erro ao conectar à ${printer.name}: ${error}`));
-                        }
-                    );
+            if (!this.bluetoothSerial) {
+                reject(new Error('Plugin Bluetooth não disponível'));
+                return;
+            }
+
+            this.bluetoothSerial.connect(
+                deviceId,
+                () => {
+                    this.isConnected = true;
+                    this.connectedDevice = deviceId;
+                    console.log('Conectado ao dispositivo:', deviceId);
+                    resolve(true);
                 },
                 (error) => {
-                    console.error('Erro ao listar dispositivos:', error);
-                    reject(new Error('Erro ao buscar dispositivos Bluetooth'));
+                    this.isConnected = false;
+                    this.connectedDevice = null;
+                    reject(new Error('Erro ao conectar: ' + error));
                 }
             );
         });
     }
 
-    /**
-     * Desconecta da impressora
-     */
-    async disconnect() {
-        try {
-            if (!this.isConnected) {
-                return { success: true, message: 'Já desconectado' };
-            }
-
-            if (this.isAndroid) {
-                return new Promise((resolve) => {
-                    window.bluetoothSerial.disconnect(
-                        () => {
-                            this.isConnected = false;
-                            this.device = null;
-                            resolve({ success: true, message: 'Desconectado com sucesso' });
-                        },
-                        (error) => {
-                            console.error('Erro ao desconectar:', error);
-                            resolve({ success: false, message: 'Erro ao desconectar' });
-                        }
-                    );
-                });
-            } else {
-                if (this.device && this.device.gatt.connected) {
-                    this.device.gatt.disconnect();
-                }
-                this.isConnected = false;
-                this.device = null;
-                this.characteristic = null;
-                return { success: true, message: 'Desconectado com sucesso' };
-            }
-        } catch (error) {
-            console.error('Erro ao desconectar:', error);
-            return { success: false, message: 'Erro ao desconectar' };
-        }
-    }
-
-    /**
-     * Envia dados para a impressora
-     */
-    async sendData(data) {
-        if (!this.isConnected) {
-            throw new Error('Impressora não conectada');
-        }
-
-        try {
-            if (this.isAndroid) {
-                return await this.sendDataAndroid(data);
-            } else {
-                return await this.sendDataWeb(data);
-            }
-        } catch (error) {
-            console.error('Erro ao enviar dados:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Envia dados via Web Bluetooth
-     */
-    async sendDataWeb(data) {
-        try {
-            const encoder = new TextEncoder();
-            const dataArray = encoder.encode(data);
-            await this.characteristic.writeValue(dataArray);
-            return { success: true };
-        } catch (error) {
-            console.error('Erro ao enviar dados via Web Bluetooth:', error);
-            throw new Error(`Erro ao imprimir: ${error.message}`);
-        }
-    }
-
-    /**
-     * Envia dados via Cordova Bluetooth
-     */
-    async sendDataAndroid(data) {
+    // Desconectar
+    disconnect() {
         return new Promise((resolve, reject) => {
-            window.bluetoothSerial.write(
+            if (!this.isCordova) {
+                // Simular desconexão no navegador
+                this.isConnected = false;
+                this.connectedDevice = null;
+                resolve(true);
+                return;
+            }
+
+            if (!this.bluetoothSerial) {
+                reject(new Error('Plugin Bluetooth não disponível'));
+                return;
+            }
+
+            this.bluetoothSerial.disconnect(
+                () => {
+                    this.isConnected = false;
+                    this.connectedDevice = null;
+                    console.log('Desconectado');
+                    resolve(true);
+                },
+                (error) => reject(new Error('Erro ao desconectar: ' + error))
+            );
+        });
+    }
+
+    // Enviar dados para impressora
+    print(data) {
+        return new Promise((resolve, reject) => {
+            if (!this.isConnected) {
+                reject(new Error('Não conectado a nenhuma impressora'));
+                return;
+            }
+
+            if (!this.isCordova) {
+                // Simular impressão no navegador
+                console.log('Simulando impressão:', data);
+                resolve(true);
+                return;
+            }
+
+            if (!this.bluetoothSerial) {
+                reject(new Error('Plugin Bluetooth não disponível'));
+                return;
+            }
+
+            this.bluetoothSerial.write(
                 data,
                 () => {
-                    resolve({ success: true });
+                    console.log('Dados enviados para impressora');
+                    resolve(true);
                 },
-                (error) => {
-                    console.error('Erro ao enviar dados via Cordova:', error);
-                    reject(new Error(`Erro ao imprimir: ${error}`));
-                }
+                (error) => reject(new Error('Erro ao imprimir: ' + error))
             );
         });
     }
 
-    /**
-     * Comandos ESC/POS para impressora POS58
-     */
+    // Comandos ESC/POS para impressoras térmicas
     getESCPOSCommands() {
         return {
             // Comandos básicos
-            ESC: '\x1B',
-            GS: '\x1D',
-            
-            // Inicialização
-            INIT: '\x1B\x40',
-            
-            // Alimentação de papel
-            LF: '\x0A',
-            CR: '\x0D',
-            FF: '\x0C',
-            
-            // Corte de papel
-            CUT: '\x1D\x56\x00',
-            PARTIAL_CUT: '\x1D\x56\x01',
-            
-            // Alinhamento
-            ALIGN_LEFT: '\x1B\x61\x00',
-            ALIGN_CENTER: '\x1B\x61\x01',
-            ALIGN_RIGHT: '\x1B\x61\x02',
+            INIT: '\x1B\x40',           // Inicializar impressora
+            LF: '\x0A',                 // Line Feed
+            CR: '\x0D',                 // Carriage Return
+            CUT: '\x1D\x56\x00',        // Cortar papel
             
             // Formatação de texto
-            BOLD_ON: '\x1B\x45\x01',
-            BOLD_OFF: '\x1B\x45\x00',
-            UNDERLINE_ON: '\x1B\x2D\x01',
-            UNDERLINE_OFF: '\x1B\x2D\x00',
+            BOLD_ON: '\x1B\x45\x01',    // Negrito ligado
+            BOLD_OFF: '\x1B\x45\x00',   // Negrito desligado
+            UNDERLINE_ON: '\x1B\x2D\x01', // Sublinhado ligado
+            UNDERLINE_OFF: '\x1B\x2D\x00', // Sublinhado desligado
+            
+            // Alinhamento
+            ALIGN_LEFT: '\x1B\x61\x00',   // Alinhar à esquerda
+            ALIGN_CENTER: '\x1B\x61\x01', // Centralizar
+            ALIGN_RIGHT: '\x1B\x61\x02',  // Alinhar à direita
             
             // Tamanho da fonte
-            FONT_SIZE_NORMAL: '\x1D\x21\x00',
-            FONT_SIZE_DOUBLE_HEIGHT: '\x1D\x21\x01',
-            FONT_SIZE_DOUBLE_WIDTH: '\x1D\x21\x10',
-            FONT_SIZE_DOUBLE: '\x1D\x21\x11',
-            
-            // Densidade
-            DENSITY_0: '\x1D\x7C\x00',
-            DENSITY_1: '\x1D\x7C\x01',
-            DENSITY_2: '\x1D\x7C\x02',
-            DENSITY_3: '\x1D\x7C\x03',
-            DENSITY_4: '\x1D\x7C\x04',
-            DENSITY_5: '\x1D\x7C\x05',
-            DENSITY_6: '\x1D\x7C\x06',
-            DENSITY_7: '\x1D\x7C\x07'
+            FONT_NORMAL: '\x1B\x21\x00',  // Fonte normal
+            FONT_DOUBLE_HEIGHT: '\x1B\x21\x10', // Altura dupla
+            FONT_DOUBLE_WIDTH: '\x1B\x21\x20',  // Largura dupla
+            FONT_DOUBLE: '\x1B\x21\x30',        // Altura e largura dupla
         };
     }
 
-    /**
-     * Imprime texto simples
-     */
-    async printText(text, options = {}) {
-        const commands = this.getESCPOSCommands();
-        let output = commands.INIT;
+    // Formatar cupom de pedido
+    formatOrderReceipt(pedido) {
+        const cmd = this.getESCPOSCommands();
+        let receipt = '';
 
-        // Aplicar formatação
-        if (options.align === 'center') output += commands.ALIGN_CENTER;
-        else if (options.align === 'right') output += commands.ALIGN_RIGHT;
-        else output += commands.ALIGN_LEFT;
+        // Inicializar impressora
+        receipt += cmd.INIT;
+        
+        // Cabeçalho
+        receipt += cmd.ALIGN_CENTER;
+        receipt += cmd.FONT_DOUBLE;
+        receipt += cmd.BOLD_ON;
+        receipt += 'PIZZARIA ATLAS\n';
+        receipt += cmd.BOLD_OFF;
+        receipt += cmd.FONT_NORMAL;
+        receipt += 'Rua das Pizzas, 123\n';
+        receipt += 'Tel: (11) 99999-9999\n';
+        receipt += cmd.LF;
 
-        if (options.bold) output += commands.BOLD_ON;
-        if (options.underline) output += commands.UNDERLINE_ON;
+        // Linha separadora
+        receipt += cmd.ALIGN_LEFT;
+        receipt += '================================\n';
+        
+        // Informações do pedido
+        receipt += cmd.BOLD_ON;
+        receipt += `PEDIDO #${pedido.id || 'N/A'}\n`;
+        receipt += cmd.BOLD_OFF;
+        receipt += `Data: ${new Date().toLocaleString('pt-BR')}\n`;
+        receipt += `Cliente: ${pedido.cliente || 'Balcão'}\n`;
+        if (pedido.telefone) {
+            receipt += `Telefone: ${pedido.telefone}\n`;
+        }
+        receipt += cmd.LF;
 
-        if (options.fontSize === 'large') output += commands.FONT_SIZE_DOUBLE;
-        else if (options.fontSize === 'medium') output += commands.FONT_SIZE_DOUBLE_HEIGHT;
-        else output += commands.FONT_SIZE_NORMAL;
+        // Itens do pedido
+        receipt += cmd.BOLD_ON;
+        receipt += 'ITENS:\n';
+        receipt += cmd.BOLD_OFF;
+        receipt += '--------------------------------\n';
 
-        // Adicionar texto
-        output += text;
+        let total = 0;
+        if (pedido.itens && pedido.itens.length > 0) {
+            pedido.itens.forEach(item => {
+                const subtotal = (item.preco || 0) * (item.quantidade || 1);
+                total += subtotal;
+                
+                receipt += `${item.nome || 'Item'}\n`;
+                receipt += `  ${item.quantidade || 1}x R$ ${(item.preco || 0).toFixed(2)} = R$ ${subtotal.toFixed(2)}\n`;
+                
+                if (item.observacoes) {
+                    receipt += `  Obs: ${item.observacoes}\n`;
+                }
+                receipt += cmd.LF;
+            });
+        }
 
-        // Resetar formatação
-        if (options.bold) output += commands.BOLD_OFF;
-        if (options.underline) output += commands.UNDERLINE_OFF;
-        output += commands.FONT_SIZE_NORMAL;
-        output += commands.ALIGN_LEFT;
+        // Total
+        receipt += '--------------------------------\n';
+        receipt += cmd.FONT_DOUBLE_HEIGHT;
+        receipt += cmd.BOLD_ON;
+        receipt += cmd.ALIGN_RIGHT;
+        receipt += `TOTAL: R$ ${total.toFixed(2)}\n`;
+        receipt += cmd.BOLD_OFF;
+        receipt += cmd.FONT_NORMAL;
+        receipt += cmd.ALIGN_LEFT;
 
-        // Quebra de linha
-        if (options.newLine !== false) output += commands.LF;
+        // Observações gerais
+        if (pedido.observacoes) {
+            receipt += cmd.LF;
+            receipt += cmd.BOLD_ON;
+            receipt += 'OBSERVAÇÕES:\n';
+            receipt += cmd.BOLD_OFF;
+            receipt += pedido.observacoes + '\n';
+        }
 
-        return await this.sendData(output);
+        // Rodapé
+        receipt += cmd.LF;
+        receipt += cmd.ALIGN_CENTER;
+        receipt += 'Obrigado pela preferência!\n';
+        receipt += 'Volte sempre!\n';
+        receipt += cmd.LF + cmd.LF;
+
+        // Cortar papel
+        receipt += cmd.CUT;
+
+        return receipt;
     }
 
-    /**
-     * Imprime linha separadora
-     */
-    async printSeparator(char = '-', length = 32) {
-        const separator = char.repeat(length);
-        return await this.printText(separator, { align: 'center' });
+    // Imprimir pedido
+    async printOrder(pedido) {
+        try {
+            if (!this.isConnected) {
+                throw new Error('Impressora não conectada');
+            }
+
+            const receipt = this.formatOrderReceipt(pedido);
+            await this.print(receipt);
+            
+            console.log('Pedido impresso com sucesso');
+            return true;
+        } catch (error) {
+            console.error('Erro ao imprimir pedido:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Alimenta papel e corta
-     */
-    async feedAndCut(lines = 3) {
-        const commands = this.getESCPOSCommands();
-        let output = commands.LF.repeat(lines) + commands.CUT;
-        return await this.sendData(output);
+    // Teste de impressão
+    async printTest() {
+        try {
+            if (!this.isConnected) {
+                throw new Error('Impressora não conectada');
+            }
+
+            const cmd = this.getESCPOSCommands();
+            let testPrint = '';
+            
+            testPrint += cmd.INIT;
+            testPrint += cmd.ALIGN_CENTER;
+            testPrint += cmd.FONT_DOUBLE;
+            testPrint += cmd.BOLD_ON;
+            testPrint += 'TESTE DE IMPRESSÃO\n';
+            testPrint += cmd.BOLD_OFF;
+            testPrint += cmd.FONT_NORMAL;
+            testPrint += cmd.LF;
+            testPrint += 'Impressora funcionando!\n';
+            testPrint += `Data: ${new Date().toLocaleString('pt-BR')}\n`;
+            testPrint += cmd.LF + cmd.LF;
+            testPrint += cmd.CUT;
+
+            await this.print(testPrint);
+            console.log('Teste de impressão realizado');
+            return true;
+        } catch (error) {
+            console.error('Erro no teste de impressão:', error);
+            throw error;
+        }
     }
 }
 
-export default BluetoothPrinter;
+// Instância singleton
+const bluetoothPrinter = new BluetoothPrinterService();
+
+export default bluetoothPrinter;

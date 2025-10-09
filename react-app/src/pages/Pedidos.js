@@ -1,27 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getPedidos, deletarPedido, atualizarPedido, deletarTodosPedidos } from '../services/api';
-import BluetoothPrinterManager from '../components/BluetoothPrinterManager';
-import useBluetoothPrinter from '../hooks/useBluetoothPrinter';
+import BluetoothPrinter from '../components/BluetoothPrinter';
 
 const Pedidos = () => {
     const { data: pedidos, loading, error, refetch } = useApi(getPedidos);
-    const { printOrder, printKitchenReceipt } = useBluetoothPrinter();
+    const [showBluetoothPrinter, setShowBluetoothPrinter] = useState(false);
+    const [selectedPedido, setSelectedPedido] = useState(null);
 
     // Função para imprimir comanda da cozinha
     // eslint-disable-next-line no-unused-vars
     const imprimirComanda = (pedido) => {
+        // Usar criado_em ou data_pedido, dependendo de qual estiver disponível
+        const dataPedido = pedido.criado_em || pedido.data_pedido;
+        const dataFormatada = dataPedido ? new Date(dataPedido).toLocaleDateString('pt-BR') : 'Data não disponível';
+            
         const conteudoComanda = `
             COMANDA DA COZINHA
             ==================
-            Pedido #${pedido.id}
-            Data: ${new Date(pedido.data_pedido).toLocaleDateString()}
+            Pedido #${pedido.id || pedido._id}
+            Data: ${dataFormatada}
             Cliente: ${pedido.cliente || 'Não informado'}
-            Status: ${pedido.status}
+            Status: ${pedido.status || 'Pendente'}
             
             ITENS:
-            ${pedido.itens ? pedido.itens.map(item => 
-                `- ${item.nome} (Qtd: ${item.quantidade})`
+            ${pedido.itens && pedido.itens.length > 0 ? pedido.itens.map(item => 
+                `- ${item.nome || 'Item'} (Qtd: ${item.quantidade || 1})`
             ).join('\n') : 'Nenhum item'}
             
             Total: R$ ${parseFloat(pedido.total || 0).toFixed(2)}
@@ -47,17 +51,46 @@ const Pedidos = () => {
     // Função para copiar mensagem do WhatsApp
     // eslint-disable-next-line no-unused-vars
     const copiarWhatsApp = (pedido) => {
+        // Usar criadoEm ou data_pedido, dependendo de qual estiver disponível
+        const dataPedido = pedido.criadoEm || pedido.data_pedido;
+        let dataFormatada = 'Data não disponível';
+        
+        if (dataPedido) {
+            try {
+                const data = new Date(dataPedido);
+                dataFormatada = data.toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (error) {
+                dataFormatada = 'Data inválida';
+            }
+        }
+        
+        // Formatar status de forma mais amigável
+        const statusFormatado = {
+            'pendente': 'Pendente',
+            'preparo': 'Em Preparo',
+            'entrega': 'Saiu para Entrega',
+            'entregue': 'Entregue'
+        }[pedido.status] || pedido.status || 'Pendente';
+        
         const mensagem = `🍕 *PEDIDO CONFIRMADO* 🍕
 
-📋 *Pedido:* #${pedido.id}
-📅 *Data:* ${new Date(pedido.data_pedido).toLocaleDateString()}
+📋 *Pedido:* #${pedido.id || pedido._id}
+📅 *Data:* ${dataFormatada}
 👤 *Cliente:* ${pedido.cliente || 'Não informado'}
-📊 *Status:* ${pedido.status}
+📊 *Status:* ${statusFormatado}
 
 🍽️ *ITENS:*
-${pedido.itens ? pedido.itens.map(item => 
-    `• ${item.nome} (${item.quantidade}x)`
-).join('\n') : 'Nenhum item'}
+${pedido.itens ? pedido.itens.map(item => {
+    const preco = item.preco || item.preco_unitario || 0;
+    const subtotal = (item.quantidade || 1) * preco;
+    return `• ${item.produto_nome || item.nome} (${item.quantidade || 1}x)\n  R$ ${preco.toFixed(2)} cada - Subtotal: R$ ${subtotal.toFixed(2)}`;
+}).join('\n') : 'Nenhum item'}
 
 💰 *Total:* R$ ${parseFloat(pedido.total || 0).toFixed(2)}
 
@@ -68,6 +101,18 @@ Obrigado pela preferência! 🙏`;
         }).catch(() => {
             alert('Erro ao copiar mensagem');
         });
+    };
+
+    // Função para abrir impressão Bluetooth
+    const abrirImpressaoBluetooth = (pedido) => {
+        setSelectedPedido(pedido);
+        setShowBluetoothPrinter(true);
+    };
+
+    // Função para fechar impressão Bluetooth
+    const fecharImpressaoBluetooth = () => {
+        setShowBluetoothPrinter(false);
+        setSelectedPedido(null);
     };
 
     // Função para excluir pedido
@@ -138,7 +183,9 @@ Obrigado pela preferência! 🙏`;
     return (
         <div className="container-fluid">
             <div className="d-sm-flex align-items-center justify-content-between mb-4">
-                <h1 className="h3 mb-0 text-gray-800">Lista de Pedidos</h1>
+                <div>
+                    <h1 className="h3 mb-0 text-gray-800">Lista de Pedidos</h1>
+                </div>
                 <div>
                     <button 
                         className="btn btn-primary btn-sm mr-2"
@@ -180,7 +227,7 @@ Obrigado pela preferência! 🙏`;
                                     {pedidos.map(pedido => (
                                         <tr key={pedido.id}>
                                             <td>{pedido.id}</td>
-                                            <td>{pedido.cliente_nome}</td>
+                                            <td>{pedido.cliente || 'Não informado'}</td>
                                             <td>
                                                 <select 
                                                     className="form-control form-control-sm"
@@ -195,43 +242,38 @@ Obrigado pela preferência! 🙏`;
                                                 </select>
                                             </td>
                                             <td>R$ {parseFloat(pedido.total || 0).toFixed(2)}</td>
-                                            <td>{new Date(pedido.data_pedido).toLocaleDateString()}</td>
+                                            <td>{new Date(pedido.criado_em || pedido.data_pedido).toLocaleDateString()}</td>
                                             <td>
-                                                <button 
-                                                    className="btn btn-success btn-sm mr-1" 
-                                                    onClick={() => imprimirComanda(pedido)}
-                                                    title="Imprimir Comanda"
-                                                >
-                                                    <i className="fas fa-print"></i>
-                                                </button>
-                                                <button 
-                                                    className="btn btn-primary btn-sm mr-1" 
-                                                    onClick={() => printOrder(pedido)}
-                                                    title="Imprimir via Bluetooth"
-                                                >
-                                                    🖨️
-                                                </button>
-                                                <button 
-                                                    className="btn btn-secondary btn-sm mr-1" 
-                                                    onClick={() => printKitchenReceipt(pedido)}
-                                                    title="Imprimir Recibo Cozinha via Bluetooth"
-                                                >
-                                                    👨‍🍳
-                                                </button>
-                                                <button 
-                                                    className="btn btn-info btn-sm mr-1" 
-                                                    onClick={() => copiarWhatsApp(pedido)}
-                                                    title="Copiar para WhatsApp"
-                                                >
-                                                    <i className="fab fa-whatsapp"></i>
-                                                </button>
-                                                <button
-                                                    className="btn btn-danger btn-sm" 
-                                                    onClick={() => excluirPedido(pedido.id)}
-                                                    title="Excluir Pedido"
-                                                >
-                                                    <i className="fas fa-trash"></i>
-                                                </button>
+                                                <div className="btn-group btn-group-sm" role="group">
+                                                    <button 
+                                                        className="btn btn-success btn-sm" 
+                                                        onClick={() => imprimirComanda(pedido)}
+                                                        title="Imprimir Comanda (Navegador)"
+                                                    >
+                                                        <i className="fas fa-print"></i>
+                                                    </button>
+                                                    <button 
+                                                        className="btn btn-primary btn-sm" 
+                                                        onClick={() => abrirImpressaoBluetooth(pedido)}
+                                                        title="Imprimir via Bluetooth"
+                                                    >
+                                                        <i className="fas fa-bluetooth"></i>
+                                                    </button>
+                                                    <button 
+                                                        className="btn btn-info btn-sm" 
+                                                        onClick={() => copiarWhatsApp(pedido)}
+                                                        title="Copiar para WhatsApp"
+                                                    >
+                                                        <i className="fab fa-whatsapp"></i>
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-danger btn-sm" 
+                                                        onClick={() => excluirPedido(pedido.id)}
+                                                        title="Excluir Pedido"
+                                                    >
+                                                        <i className="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -245,11 +287,14 @@ Obrigado pela preferência! 🙏`;
                     )}
                 </div>
             </div>
-            
-            {/* Gerenciador da Impressora Bluetooth */}
-            <BluetoothPrinterManager 
-                showOrderButtons={false}
-            />
+
+            {/* Modal de Impressão Bluetooth */}
+            {showBluetoothPrinter && (
+                <BluetoothPrinter 
+                    pedido={selectedPedido}
+                    onClose={fecharImpressaoBluetooth}
+                />
+            )}
         </div>
     );
 };
