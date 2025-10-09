@@ -30,8 +30,9 @@ function getApiUrl() {
         }
         
         // Se estiver no InfinityFree, usar a API local
-        if (hostname.includes('infinityfreeapp.com') || hostname.includes('epizy.com') || hostname === 'rotaexpress.free.nf') {
+        if (hostname.includes('infinityfreeapp.com') || hostname.includes('epizy.com') || hostname === 'rotaexpress.free.nf' || hostname.includes('free.nf')) {
             console.log('Ambiente detectado: InfinityFree');
+            console.log('URL da API retornada:', window.location.origin);
             return window.location.origin;
         }
     }
