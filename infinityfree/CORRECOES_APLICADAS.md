@@ -1,5 +1,22 @@
 # 🔧 Correções Aplicadas - rotaexpress.free.nf
 
+## ✅ Correções do Sidebar (Aplicadas em 2025-01-14)
+
+### Problema Identificado
+- O ícone do hamburger no topbar não estava abrindo/fechando o sidebar
+- Falta de comunicação entre os componentes App.js, Topbar.js e Sidebar.js
+
+### Correções Aplicadas
+1. **App.js**: Configurado para passar estado `sidebarToggled` e função `handleSidebarToggle` como props para o Sidebar
+2. **Sidebar.js**: Removido estado interno e configurado para receber props do App.js
+3. **Build atualizado**: Gerado novo build com hash `main.38314f54.js` contendo as correções
+
+### Arquivos Atualizados
+- `/static/js/main.38314f54.js` (novo arquivo com correções)
+- `index.html` (atualizado para referenciar o novo arquivo JS)
+
+---
+
 ## ❌ Problema Identificado:
 - Erro 404 ao acessar `https://rotaexpress.free.nf/dashboard`
 - React Router não funcionando corretamente no InfinityFree
