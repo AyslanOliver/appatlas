@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pizzaria-atlas-v1';
+const CACHE_NAME = 'pizzaria-atlas-v3';
 const urlsToCache = [
   '/',
   '/manifest.json'
