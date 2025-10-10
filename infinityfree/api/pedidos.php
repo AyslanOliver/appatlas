@@ -1,46 +1,92 @@
 <?php
 require_once '../config.php';
 
+// Configurar headers CORS primeiro
 setCorsHeaders();
+
+// Responder imediatamente a requisições OPTIONS
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
 try {
     $pdo = getConnection();
     $method = $_SERVER['REQUEST_METHOD'];
     
+    // Workaround para InfinityFree: aceitar DELETE via POST com _method
+    if ($method === 'POST') {
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (isset($input['_method'])) {
+            $method = strtoupper($input['_method']);
+        } elseif (isset($_POST['_method'])) {
+            $method = strtoupper($_POST['_method']);
+        }
+    }
+    
+    // Extrair ID da URL de forma mais robusta
+    $requestUri = $_SERVER['REQUEST_URI'];
+    $pathParts = explode('/', trim(parse_url($requestUri, PHP_URL_PATH), '/'));
+    $pedidoId = null;
+    
+    // Procurar por ID numérico após 'pedidos' ou 'pedidos.php'
+    $pedidosIndex = false;
+    foreach ($pathParts as $index => $part) {
+        if ($part === 'pedidos' || $part === 'pedidos.php') {
+            $pedidosIndex = $index;
+            break;
+        }
+    }
+    
+    if ($pedidosIndex !== false && isset($pathParts[$pedidosIndex + 1]) && is_numeric($pathParts[$pedidosIndex + 1])) {
+        $pedidoId = (int)$pathParts[$pedidosIndex + 1];
+    }
+    
+    // Fallback para $_GET['id'] se não encontrou na URL
+    if (!$pedidoId && isset($_GET['id']) && is_numeric($_GET['id'])) {
+        $pedidoId = (int)$_GET['id'];
+    }
+    
     switch ($method) {
         case 'GET':
-            // Buscar todos os pedidos
-            $stmt = $pdo->prepare("
-                SELECT p.*, 
-                       GROUP_CONCAT(
-                           JSON_OBJECT(
-                               'nome', pi.nome,
-                               'quantidade', pi.quantidade,
-                               'preco', pi.preco
-                           )
-                       ) as itens
-                FROM pedidos p
-                LEFT JOIN pedido_itens pi ON p.id = pi.pedido_id
-                GROUP BY p.id
-                ORDER BY p.criado_em DESC
-            ");
-            $stmt->execute();
-            $pedidos = $stmt->fetchAll();
-            
-            // Processar os itens de cada pedido
-            foreach ($pedidos as &$pedido) {
+            if ($pedidoId) {
+                // Buscar pedido específico por ID
+                $stmt = $pdo->prepare("SELECT * FROM pedidos WHERE id = ?");
+                $stmt->execute([$pedidoId]);
+                $pedido = $stmt->fetch();
+                
+                if (!$pedido) {
+                    jsonResponse(['error' => 'Pedido não encontrado'], 404);
+                }
+                
+                // Buscar itens do pedido
+                $stmt = $pdo->prepare("SELECT nome, quantidade, preco FROM pedido_itens WHERE pedido_id = ?");
+                $stmt->execute([$pedidoId]);
+                $itens = $stmt->fetchAll();
+                
                 $pedido['id'] = (string)$pedido['id'];
                 $pedido['data_pedido'] = $pedido['criado_em'];
+                $pedido['itens'] = $itens;
                 
-                if ($pedido['itens']) {
-                    $itens = explode(',', $pedido['itens']);
-                    $pedido['itens'] = array_map('json_decode', $itens);
-                } else {
-                    $pedido['itens'] = [];
+                jsonResponse($pedido);
+            } else {
+                // Buscar todos os pedidos
+                $stmt = $pdo->prepare("SELECT * FROM pedidos ORDER BY criado_em DESC");
+                $stmt->execute();
+                $pedidos = $stmt->fetchAll();
+                
+                // Buscar itens para cada pedido
+                foreach ($pedidos as &$pedido) {
+                    $pedido['id'] = (string)$pedido['id'];
+                    $pedido['data_pedido'] = $pedido['criado_em'];
+                    
+                    $stmt = $pdo->prepare("SELECT nome, quantidade, preco FROM pedido_itens WHERE pedido_id = ?");
+                    $stmt->execute([$pedido['id']]);
+                    $pedido['itens'] = $stmt->fetchAll();
                 }
+                
+                jsonResponse($pedidos);
             }
-            
-            jsonResponse($pedidos);
             break;
             
         case 'POST':
@@ -54,6 +100,10 @@ try {
             $pdo->beginTransaction();
             
             try {
+                // Mapear campos do frontend para o backend
+                $telefone = $input['telefone'] ?? $input['cliente_telefone'] ?? '';
+                $endereco = $input['endereco'] ?? $input['cliente_endereco'] ?? '';
+                
                 // Inserir pedido
                 $stmt = $pdo->prepare("
                     INSERT INTO pedidos (cliente, telefone, endereco, total, status) 
@@ -61,8 +111,8 @@ try {
                 ");
                 $stmt->execute([
                     $input['cliente'],
-                    $input['telefone'] ?? '',
-                    $input['endereco'] ?? '',
+                    $telefone,
+                    $endereco,
                     $input['total'],
                     $input['status'] ?? 'pendente'
                 ]);
@@ -77,11 +127,16 @@ try {
                     ");
                     
                     foreach ($input['itens'] as $item) {
+                        // Mapear campos do item (frontend pode enviar produto_nome ou nome)
+                        $nomeItem = $item['nome'] ?? $item['produto_nome'] ?? 'Item sem nome';
+                        $quantidadeItem = $item['quantidade'] ?? 1;
+                        $precoItem = $item['preco'] ?? 0;
+                        
                         $stmtItem->execute([
                             $pedidoId,
-                            $item['nome'],
-                            $item['quantidade'],
-                            $item['preco']
+                            $nomeItem,
+                            $quantidadeItem,
+                            $precoItem
                         ]);
                     }
                 }
@@ -105,8 +160,7 @@ try {
             
         case 'PUT':
             // Atualizar pedido
-            $id = $_GET['id'] ?? null;
-            if (!$id) {
+            if (!$pedidoId) {
                 jsonResponse(['error' => 'ID do pedido é obrigatório'], 400);
             }
             
@@ -129,17 +183,22 @@ try {
                 jsonResponse(['error' => 'Nenhum campo para atualizar'], 400);
             }
             
-            $values[] = $id;
+            $values[] = $pedidoId;
             $sql = "UPDATE pedidos SET " . implode(', ', $fields) . " WHERE id = ?";
             
             $stmt = $pdo->prepare($sql);
-            $stmt->execute($values);
+            $result = $stmt->execute($values);
             
-            jsonResponse(['message' => 'Pedido atualizado com sucesso']);
+            if ($result && $stmt->rowCount() > 0) {
+                jsonResponse(['message' => 'Pedido atualizado com sucesso']);
+            } else if ($stmt->rowCount() === 0) {
+                jsonResponse(['error' => 'Pedido não encontrado ou nenhuma alteração foi feita'], 404);
+            } else {
+                jsonResponse(['error' => 'Erro ao atualizar pedido'], 500);
+            }
             break;
             
         case 'DELETE':
-            $id = $_GET['id'] ?? null;
             $deleteAll = $_GET['deleteAll'] ?? false;
             
             if ($deleteAll === 'true') {
@@ -154,17 +213,19 @@ try {
                 ]);
             } else {
                 // Deletar pedido específico
-                if (!$id) {
+                if (!$pedidoId) {
                     jsonResponse(['error' => 'ID do pedido é obrigatório'], 400);
                 }
                 
                 $stmt = $pdo->prepare("DELETE FROM pedidos WHERE id = ?");
-                $stmt->execute([$id]);
+                $result = $stmt->execute([$pedidoId]);
                 
-                if ($stmt->rowCount() > 0) {
+                if ($result && $stmt->rowCount() > 0) {
                     jsonResponse(['message' => 'Pedido deletado com sucesso']);
-                } else {
+                } else if ($stmt->rowCount() === 0) {
                     jsonResponse(['error' => 'Pedido não encontrado'], 404);
+                } else {
+                    jsonResponse(['error' => 'Erro ao deletar pedido'], 500);
                 }
             }
             break;

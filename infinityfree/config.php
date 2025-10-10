@@ -3,13 +3,13 @@
 // IMPORTANTE: Substitua essas informações pelas suas credenciais do InfinityFree
 
 // Configurações do banco de dados
-define('DB_HOST', 'sql201.infinityfree.com'); // Substitua pelo seu host
-define('DB_NAME', 'if0_39733145_pastelaria'); // Substitua pelo nome do seu banco
-define('DB_USER', 'if0_39733145'); // Substitua pelo seu usuário
-define('DB_PASS', 'CeEJrC6eOE'); // Substitua pela sua senha
+define('DB_HOST', 'sql201.infinityfree.com'); // Host do InfinityFree
+define('DB_NAME', 'if0_39733145_pizzaria'); // Nome do banco de dados
+define('DB_USER', 'if0_39733145'); // Usuário do banco de dados
+define('DB_PASS', 'CeEJrC6eOE'); // Senha do banco de dados
 
 // Configurações gerais
-define('API_BASE_URL', 'https://seudominio.infinityfreeapp.com/api');
+define('API_BASE_URL', 'https://rotaexpress.free.nf/api/');
 define('CORS_ORIGIN', '*'); // Em produção, especifique o domínio exato
 
 // Função para conectar ao banco de dados
@@ -27,22 +27,48 @@ function getConnection() {
         );
         return $pdo;
     } catch (PDOException $e) {
+        // Log do erro para debug
+        logError('Database connection failed', [
+            'host' => DB_HOST,
+            'database' => DB_NAME,
+            'user' => DB_USER,
+            'error' => $e->getMessage()
+        ]);
+        
         http_response_code(500);
-        echo json_encode(['error' => 'Erro de conexão com o banco de dados']);
+        echo json_encode([
+            'error' => 'Erro de conexão com o banco de dados',
+            'debug' => 'Verifique as credenciais do banco de dados',
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
         exit;
     }
 }
 
 // Função para configurar CORS
 function setCorsHeaders() {
-    header('Access-Control-Allow-Origin: ' . CORS_ORIGIN);
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization');
-    header('Content-Type: application/json; charset=utf-8');
+    // Permitir origem específica ou todas (*)
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $allowedOrigins = [
+        'https://rotaexpress.free.nf',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000'
+    ];
     
-    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        http_response_code(200);
-        exit;
+    if (in_array($origin, $allowedOrigins) || CORS_ORIGIN === '*') {
+        header('Access-Control-Allow-Origin: ' . $origin);
+    } else {
+        header('Access-Control-Allow-Origin: https://rotaexpress.free.nf');
+    }
+    
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept');
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Max-Age: 86400'); // Cache preflight por 24h
+    
+    // Definir Content-Type apenas se não for OPTIONS
+    if ($_SERVER['REQUEST_METHOD'] !== 'OPTIONS') {
+        header('Content-Type: application/json; charset=utf-8');
     }
 }
 

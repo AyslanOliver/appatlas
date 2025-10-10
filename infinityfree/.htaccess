@@ -4,6 +4,17 @@
 # Habilitar reescrita de URL
 RewriteEngine On
 
+# Regras para API - permitir acesso direto aos arquivos .php
+# Regra 1: Redirecionar /api/pedidos/ID para /api/pedidos.php?id=ID
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/([^/]+)/([0-9]+)/?$ /api/$1.php?id=$2 [L,QSA]
+
+# Regra 2: Redirecionar /api/arquivo para /api/arquivo.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/([^/]+)/?$ /api/$1.php [L,QSA]
+
 # Regras básicas para React Router (SPA)
 # Redirecionar rotas não encontradas para index.html
 RewriteCond %{REQUEST_FILENAME} !-f

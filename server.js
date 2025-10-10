@@ -91,6 +91,40 @@ app.post('/api/pedidos', (req, res) => {
     res.status(201).json(novoPedido);
 });
 
+// Rota para buscar pedido específico por ID na URL
+app.get('/api/pedidos/:id', (req, res) => {
+    const { id } = req.params;
+    const pedido = pedidos.find(p => p.id === id);
+    if (pedido) {
+        res.json(pedido);
+    } else {
+        res.status(404).json({ error: 'Pedido não encontrado' });
+    }
+});
+
+app.put('/api/pedidos/:id', (req, res) => {
+    const { id } = req.params;
+    const index = pedidos.findIndex(p => p.id === id);
+    if (index !== -1) {
+        pedidos[index] = { ...pedidos[index], ...req.body, atualizadoEm: new Date() };
+        res.json({ message: 'Pedido atualizado com sucesso' });
+    } else {
+        res.status(404).json({ error: 'Pedido não encontrado' });
+    }
+});
+
+app.delete('/api/pedidos/:id', (req, res) => {
+    const { id } = req.params;
+    const index = pedidos.findIndex(p => p.id === id);
+    if (index !== -1) {
+        pedidos.splice(index, 1);
+        res.json({ message: 'Pedido deletado com sucesso' });
+    } else {
+        res.status(404).json({ error: 'Pedido não encontrado' });
+    }
+});
+
+// Rotas com query parameters (mantidas para compatibilidade)
 app.put('/api/pedidos', (req, res) => {
     const { id } = req.query;
     const index = pedidos.findIndex(p => p.id === id);

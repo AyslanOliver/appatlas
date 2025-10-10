@@ -4,21 +4,13 @@ import axios from 'axios';
 function getApiUrl() {
     console.log('=== DEBUG getApiUrl ===');
     
-    // Se estiver rodando no Cordova (protocolo file:), usar a API do InfinityFree
-    if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
-        console.log('Ambiente detectado: Cordova');
-        return 'https://rotaexpress.free.nf'; // URL do seu domínio
-    }
-    
     // Detectar o ambiente baseado no hostname
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
         const protocol = window.location.protocol;
-        const port = window.location.port;
         
         console.log('Hostname:', hostname);
         console.log('Protocol:', protocol);
-        console.log('Port:', port);
         
         // Para desenvolvimento local, usar servidor local
         const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
@@ -28,18 +20,13 @@ function getApiUrl() {
             console.log('URL da API retornada:', apiUrl);
             return apiUrl;
         }
-        
-        // Se estiver no InfinityFree, usar a API local
-        if (hostname.includes('infinityfreeapp.com') || hostname.includes('epizy.com') || hostname === 'rotaexpress.free.nf' || hostname.includes('free.nf')) {
-            console.log('Ambiente detectado: InfinityFree');
-            console.log('URL da API retornada:', window.location.origin);
-            return window.location.origin;
-        }
     }
     
-    // Fallback para InfinityFree
-    console.log('Ambiente detectado: Fallback');
-    return 'https://rotaexpress.free.nf'; // URL do seu domínio
+    // Para todos os outros casos (InfinityFree, Cordova, etc.), usar InfinityFree
+    console.log('Ambiente detectado: InfinityFree');
+    const apiUrl = 'https://rotaexpress.free.nf';
+    console.log('URL da API retornada:', apiUrl);
+    return apiUrl;
 }
 
 // Configuração do axios
@@ -57,18 +44,14 @@ console.log('API_URL configurado:', API_URL);
 if (typeof window !== 'undefined') {
     console.log('Protocolo atual:', window.location.protocol);
     console.log('Hostname atual:', window.location.hostname);
-    console.log('Ambiente detectado:', 
-        window.location.protocol === 'file:' ? 'Cordova' : 
-        window.location.hostname.includes('infinityfreeapp.com') || window.location.hostname.includes('epizy.com') || window.location.hostname === 'rotaexpress.free.nf' ? 'InfinityFree' : 
-        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'Local' : 'Outro'
-    );
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    console.log('Ambiente detectado:', isLocal ? 'Local' : 'InfinityFree');
 }
-console.log('Build timestamp:', new Date().toISOString());
 
 // Função para testar a conexão com a API
 export const testarConexao = async () => {
     try {
-        const response = await api.get('/api/test');
+        const response = await api.get('/api/test.php');
         return response.data;
     } catch (error) {
         console.error('Erro ao testar conexão:', error);
@@ -79,7 +62,7 @@ export const testarConexao = async () => {
 // Funções para gerenciamento de produtos
 export const getProdutos = async () => {
     try {
-        const response = await api.get('/api/produtos');
+        const response = await api.get('/api/produtos.php');
         return response.data;
     } catch (error) {
         console.error('Erro ao buscar produtos:', error);
@@ -89,7 +72,7 @@ export const getProdutos = async () => {
 
 export const criarProduto = async (dados) => {
     try {
-        const response = await api.post('/api/produtos', dados);
+        const response = await api.post('/api/produtos.php', dados);
         return response.data;
     } catch (error) {
         console.error('Erro ao criar produto:', error);
@@ -99,7 +82,8 @@ export const criarProduto = async (dados) => {
 
 export const atualizarProduto = async (id, dados) => {
     try {
-        const response = await api.put(`/api/produtos/${id}`, dados);
+        // Workaround para InfinityFree: usar POST com _method=PUT
+        const response = await api.post(`/api/produtos/${id}`, { ...dados, _method: 'PUT' });
         return response.data;
     } catch (error) {
         console.error('Erro ao atualizar produto:', error);
@@ -109,7 +93,8 @@ export const atualizarProduto = async (id, dados) => {
 
 export const deletarProduto = async (id) => {
     try {
-        const response = await api.delete(`/api/produtos/${id}`);
+        // Workaround para InfinityFree: usar POST com _method=DELETE
+        const response = await api.post(`/api/produtos/${id}`, { _method: 'DELETE' });
         return response.data;
     } catch (error) {
         console.error('Erro ao deletar produto:', error);
@@ -120,7 +105,7 @@ export const deletarProduto = async (id) => {
 // Funções para gerenciamento de pedidos
 export const getPedidos = async () => {
     try {
-        const response = await api.get('/api/pedidos');
+        const response = await api.get('/api/pedidos.php');
         return response.data;
     } catch (error) {
         console.error('Erro ao buscar pedidos:', error);
@@ -140,7 +125,7 @@ export const getPedidoById = async (id) => {
 
 export const criarPedido = async (pedido) => {
     try {
-        const response = await api.post('/api/pedidos', pedido);
+        const response = await api.post('/api/pedidos.php', pedido);
         return response.data;
     } catch (error) {
         console.error('Erro ao criar pedido:', error);
@@ -150,7 +135,8 @@ export const criarPedido = async (pedido) => {
 
 export const atualizarPedido = async (id, dados) => {
     try {
-        const response = await api.put(`/api/pedidos/${id}`, dados);
+        // Workaround para InfinityFree: usar POST com _method=PUT
+        const response = await api.post(`/api/pedidos/${id}`, { ...dados, _method: 'PUT' });
         return response.data;
     } catch (error) {
         console.error('Erro ao atualizar pedido:', error);
@@ -160,7 +146,8 @@ export const atualizarPedido = async (id, dados) => {
 
 export const deletarPedido = async (id) => {
     try {
-        const response = await api.delete(`/api/pedidos/${id}`);
+        // Workaround para InfinityFree: usar POST com _method=DELETE
+        const response = await api.post(`/api/pedidos/${id}`, { _method: 'DELETE' });
         return response.data;
     } catch (error) {
         console.error('Erro ao deletar pedido:', error);
@@ -170,7 +157,8 @@ export const deletarPedido = async (id) => {
 
 export const deletarTodosPedidos = async () => {
     try {
-        const response = await api.delete('/api/pedidos?deleteAll=true');
+        // Workaround para InfinityFree: usar POST com _method=DELETE
+        const response = await api.post('/api/pedidos', { _method: 'DELETE', deleteAll: 'true' });
         return response.data;
     } catch (error) {
         console.error('Erro ao deletar todos os pedidos:', error);
@@ -180,7 +168,7 @@ export const deletarTodosPedidos = async () => {
 
 export const getCardapio = async (tipo = '') => {
     try {
-        const url = tipo ? `/api/cardapio?tipo=${tipo}` : '/api/cardapio';
+        const url = tipo ? `/api/cardapio.php?tipo=${tipo}` : '/api/cardapio.php';
         const response = await api.get(url);
         return response.data;
     } catch (error) {

@@ -7,6 +7,16 @@ try {
     $pdo = getConnection();
     $method = $_SERVER['REQUEST_METHOD'];
     
+    // Workaround para InfinityFree: aceitar PUT/DELETE via POST com _method
+    if ($method === 'POST') {
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (isset($input['_method'])) {
+            $method = strtoupper($input['_method']);
+        } elseif (isset($_POST['_method'])) {
+            $method = strtoupper($_POST['_method']);
+        }
+    }
+    
     switch ($method) {
         case 'GET':
             // Buscar todos os produtos

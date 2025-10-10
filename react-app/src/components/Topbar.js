@@ -16,6 +16,14 @@ const Topbar = ({ onSidebarToggle }) => {
                 id="sidebarToggleTop" 
                 className="btn btn-link d-md-none rounded-circle mr-3"
                 onClick={onSidebarToggle}
+                style={{
+                    color: '#5a5c69',
+                    fontSize: '1.2rem',
+                    padding: '0.5rem',
+                    border: 'none',
+                    background: 'transparent'
+                }}
+                aria-label="Toggle Sidebar"
             >
                 <i className="fa fa-bars"></i>
             </button>

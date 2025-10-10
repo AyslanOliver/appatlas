@@ -89,15 +89,18 @@ const Sidebar = ({ isToggled, onToggle }) => {
       </li>
 
       {/* Divider */}
-      <hr className="sidebar-divider d-none d-md-block" />
+      <hr className="sidebar-divider" />
 
       {/* Sidebar Toggler (Sidebar) */}
-      <div className="text-center d-none d-md-inline">
+      <div className="text-center">
         <button 
           className="rounded-circle border-0" 
           id="sidebarToggle"
           onClick={onToggle}
-        ></button>
+          aria-label="Toggle Sidebar"
+        >
+          <i className="fas fa-angle-left"></i>
+        </button>
       </div>
     </ul>
   );

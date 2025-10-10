@@ -6,11 +6,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "node server.js",
     "build": "echo 'Build completed'",
-    "start": "vercel dev",
+    "start": "node server.js",
     "server": "node server.js",
-    "deploy": "vercel --prod",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
