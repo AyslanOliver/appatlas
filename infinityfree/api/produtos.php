@@ -6,6 +6,7 @@ setCorsHeaders();
 try {
     $pdo = getConnection();
     $method = $_SERVER['REQUEST_METHOD'];
+    $input = null;
     
     // Workaround para InfinityFree: aceitar PUT/DELETE via POST com _method
     if ($method === 'POST') {
@@ -72,7 +73,11 @@ try {
                 jsonResponse(['error' => 'ID do produto é obrigatório'], 400);
             }
             
-            $input = json_decode(file_get_contents('php://input'), true);
+            // Se não temos input ainda (requisição PUT direta), ler agora
+            if (!$input) {
+                $input = json_decode(file_get_contents('php://input'), true);
+            }
+            
             if (!$input) {
                 jsonResponse(['error' => 'Dados inválidos'], 400);
             }

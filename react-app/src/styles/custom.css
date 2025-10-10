@@ -585,15 +585,18 @@ body {
   /* Manter botão de toggle do sidebar visível em mobile */
   .sidebar #sidebarToggle {
     display: flex !important;
-    position: fixed;
+    position: absolute;
     bottom: 1rem;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 1003;
+    z-index: 1004;
     width: 3rem;
     height: 3rem;
     font-size: 1rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    color: #5a5c69 !important;
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
   }
   
   /* Também mostrar botão de toggle do topbar como alternativa */
@@ -922,7 +925,7 @@ body {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  z-index: 1000;
   display: block;
 }
 
