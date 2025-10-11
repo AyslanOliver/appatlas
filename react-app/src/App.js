@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
-import Topbar from './components/Topbar';
 import Footer from './components/Footer';
 import Dashboard from './pages/Dashboard';
 import Pedidos from './pages/Pedidos';
@@ -26,6 +25,52 @@ function App() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Funcionalidade de swipe para mobile
+  useEffect(() => {
+    if (!isMobile) return;
+
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+
+    const handleTouchStart = (e) => {
+      startX = e.touches[0].clientX;
+      isDragging = true;
+    };
+
+    const handleTouchMove = (e) => {
+      if (!isDragging) return;
+      currentX = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = () => {
+      if (!isDragging) return;
+      isDragging = false;
+
+      const diffX = currentX - startX;
+      const threshold = 50;
+
+      // Swipe da esquerda para direita (abrir sidebar)
+      if (diffX > threshold && startX < 50 && !sidebarToggled) {
+        setSidebarToggled(true);
+      }
+      // Swipe da direita para esquerda (fechar sidebar)
+      else if (diffX < -threshold && sidebarToggled) {
+        setSidebarToggled(false);
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isMobile, sidebarToggled]);
+
   const handleSidebarToggle = () => {
     setSidebarToggled(!sidebarToggled);
   };
@@ -42,6 +87,17 @@ function App() {
       <div id="wrapper">
         <Sidebar isToggled={sidebarToggled} onToggle={handleSidebarToggle} />
         
+        {/* Botão mobile flutuante */}
+        {isMobile && (
+          <button 
+            className={`mobile-menu-btn ${sidebarToggled ? 'active' : ''}`}
+            onClick={handleSidebarToggle}
+            aria-label="Toggle menu"
+          >
+            <i className={`fas ${sidebarToggled ? 'fa-times' : 'fa-bars'}`}></i>
+          </button>
+        )}
+        
         {/* Overlay para mobile */}
         {isMobile && sidebarToggled && (
           <div 
@@ -50,10 +106,13 @@ function App() {
           ></div>
         )}
         
+        {/* Área de swipe */}
+        {isMobile && !sidebarToggled && (
+          <div className="swipe-area"></div>
+        )}
+        
         <div id="content-wrapper" className="d-flex flex-column">
           <div id="content">
-            <Topbar onSidebarToggle={handleSidebarToggle} />
-            
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />

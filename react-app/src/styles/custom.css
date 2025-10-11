@@ -190,26 +190,42 @@ body {
   z-index: -1;
 }
 
-/* Topbar toggle button for mobile */
-#sidebarToggleTop {
-  display: none;
-  color: #5a5c69;
-  font-size: 1.2rem;
-  padding: 0.5rem;
+/* Mobile menu button */
+.mobile-menu-btn {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1003;
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, #5a5c69, #6c757d);
   border: none;
-  background: transparent;
-  border-radius: 0.35rem;
-  transition: all 0.15s ease-in-out;
+  border-radius: 50%;
+  color: white;
+  font-size: 1.2rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
-#sidebarToggleTop:hover {
-  background-color: rgba(90, 92, 105, 0.1);
-  color: #3a3b45;
+.mobile-menu-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
-#sidebarToggleTop:focus {
-  outline: none;
-  box-shadow: 0 0 0 0.2rem rgba(90, 92, 105, 0.25);
+.mobile-menu-btn:active {
+  transform: scale(0.95);
+}
+
+.mobile-menu-btn i {
+  transition: transform 0.3s ease;
+}
+
+.mobile-menu-btn.active i {
+  transform: rotate(90deg);
 }
 
 /* Content wrapper */
@@ -219,6 +235,7 @@ body {
   overflow-x: hidden;
   margin-left: 224px;
   transition: all 0.3s ease;
+  min-height: 100vh;
 }
 
 .sidebar.toggled ~ #content-wrapper {
@@ -227,7 +244,8 @@ body {
 
 #content {
   flex: 1 0 auto;
-  padding: 1.5rem;
+  padding: 2rem 1.5rem;
+  min-height: calc(100vh - 60px);
 }
 
 /* Overlay para mobile */
@@ -242,44 +260,18 @@ body {
   display: none;
 }
 
-/* Topbar */
-.topbar {
-  height: 4.375rem;
-  background-color: #fff;
-  border-bottom: 1px solid #e3e6f0;
-  padding: 0 1.5rem;
-  position: sticky;
-  top: 0;
-  z-index: 999;
-}
-
-.topbar .navbar-search .form-control {
-  background-color: #f8f9fc;
-  border: 1px solid #d1d3e2;
-  border-radius: 10rem;
-  font-size: 0.85rem;
-  height: auto;
-  padding: 0.75rem 1rem;
-}
-
-.topbar .navbar-search .btn {
-  border-radius: 10rem;
-  background-color: #5a5c69;
-  border-color: #5a5c69;
-}
-
 /* Dropdown customizations */
-.topbar .dropdown-toggle {
+.dropdown-toggle {
   border: none !important;
   background: none !important;
   color: #5a5c69 !important;
 }
 
-.topbar .dropdown-toggle:hover {
+.dropdown-toggle:hover {
   color: #3a3b45 !important;
 }
 
-.topbar .dropdown-menu {
+.dropdown-menu {
   border: none;
   box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
   border-radius: 0.35rem;
@@ -461,15 +453,18 @@ body {
 /* Responsive - Mobile */
 @media (max-width: 576px) {
   .sidebar {
-    width: 224px;
+    width: 280px;
     transform: translateX(-100%);
     position: fixed;
     z-index: 1001;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    height: 100vh;
+    overflow-y: auto;
   }
   
   .sidebar.toggled {
     transform: translateX(0);
-    width: 224px;
+    width: 280px;
   }
   
   .sidebar.toggled .sidebar-brand-text,
@@ -481,6 +476,7 @@ body {
   #content-wrapper {
     margin-left: 0;
     width: 100%;
+    min-height: 100vh;
   }
   
   .sidebar.toggled ~ #content-wrapper {
@@ -489,35 +485,105 @@ body {
   
   .sidebar-overlay {
     display: block;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
   }
   
-  .topbar {
-    padding: 0 0.5rem;
+  .sidebar.toggled ~ .sidebar-overlay {
+    opacity: 1;
+    visibility: visible;
   }
   
   #content {
-    padding: 0.75rem;
+    padding: 5rem 1rem 2rem 1rem;
+    min-height: calc(100vh - 7rem);
   }
   
   .card {
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
   }
   
   .table-responsive {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
   }
   
   .sidebar #sidebarToggle {
     display: none;
   }
   
-  #sidebarToggleTop {
-    display: inline-flex !important;
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+  
+  /* Melhorar área de toque */
+  .sidebar .nav-item .nav-link {
+    padding: 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .sidebar .nav-item .nav-link i {
+    font-size: 1rem;
+    margin-right: 0.75rem;
   }
 }
 
 /* Extra small devices */
 @media (max-width: 480px) {
+  .sidebar {
+    width: 100%;
+    height: 100vh;
+  }
+  
+  .sidebar.toggled {
+    width: 100%;
+  }
+  
+  #content {
+    padding: 5rem 0.75rem 2rem 0.75rem;
+    min-height: calc(100vh - 7rem);
+  }
+  
+  .mobile-menu-btn {
+    top: 0.75rem;
+    left: 0.75rem;
+  }
+  
+  .card-header {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    min-height: 44px; /* Melhor área de toque */
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .mobile-menu-btn {
+    width: 3.5rem;
+    height: 3.5rem;
+    font-size: 1.3rem;
+  }
+  
   .topbar .navbar-search {
     display: none;
   }
@@ -536,6 +602,43 @@ body {
   
   .dashboard-card .h5 {
     font-size: 1rem;
+  }
+}
+
+/* Suporte a gestos de swipe */
+.swipe-area {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 100vh;
+  z-index: 999;
+  background: transparent;
+  touch-action: pan-x;
+}
+
+@media (max-width: 768px) {
+  .swipe-area {
+    width: 30px;
+  }
+}
+
+/* Animações suaves para transições */
+.sidebar,
+.sidebar-overlay,
+#content-wrapper {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Melhorar scrolling em mobile */
+@media (max-width: 768px) {
+  .sidebar {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+  
+  body {
+    -webkit-overflow-scrolling: touch;
   }
 }
 

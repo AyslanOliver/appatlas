@@ -12,7 +12,7 @@ function getApiUrl() {
         console.log('Hostname:', hostname);
         console.log('Protocol:', protocol);
         
-        // Para desenvolvimento local, usar servidor local
+        // Para desenvolvimento local, usar servidor local Node.js
         const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
         if (isLocal) {
             console.log('Ambiente detectado: Local');
@@ -22,9 +22,10 @@ function getApiUrl() {
         }
     }
     
-    // Para todos os outros casos (InfinityFree, Cordova, etc.), usar InfinityFree
-    console.log('Ambiente detectado: InfinityFree');
-    const apiUrl = 'https://rotaexpress.free.nf';
+    // Para todos os outros casos, usar servidor Node.js local
+    // Nota: Como não há API PHP no InfinityFree, usar sempre o servidor local
+    console.log('Ambiente detectado: Produção (usando servidor local)');
+    const apiUrl = 'http://localhost:3001';
     console.log('URL da API retornada:', apiUrl);
     return apiUrl;
 }
@@ -51,7 +52,7 @@ if (typeof window !== 'undefined') {
 // Função para testar a conexão com a API
 export const testarConexao = async () => {
     try {
-        const response = await api.get('/api/test.php');
+        const response = await api.get('/api/test');
         return response.data;
     } catch (error) {
         console.error('Erro ao testar conexão:', error);
@@ -62,7 +63,7 @@ export const testarConexao = async () => {
 // Funções para gerenciamento de produtos
 export const getProdutos = async () => {
     try {
-        const response = await api.get('/api/produtos.php');
+        const response = await api.get('/api/produtos');
         return response.data;
     } catch (error) {
         console.error('Erro ao buscar produtos:', error);
@@ -72,7 +73,7 @@ export const getProdutos = async () => {
 
 export const criarProduto = async (dados) => {
     try {
-        const response = await api.post('/api/produtos.php', dados);
+        const response = await api.post('/api/produtos', dados);
         return response.data;
     } catch (error) {
         console.error('Erro ao criar produto:', error);
