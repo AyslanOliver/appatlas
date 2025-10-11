@@ -56,6 +56,64 @@ class BluetoothPrinterService {
   }
 
   /**
+   * Verifica se o Bluetooth está disponível
+   */
+  async isBluetoothAvailable() {
+    if (!this.isBluetoothSupported()) {
+      throw new Error('Web Bluetooth não é suportado neste navegador');
+    }
+    
+    try {
+      const availability = await navigator.bluetooth.getAvailability();
+      if (!availability) {
+        throw new Error('Bluetooth não está disponível neste dispositivo');
+      }
+      return true;
+    } catch (error) {
+      throw new Error('Erro ao verificar disponibilidade do Bluetooth: ' + error.message);
+    }
+  }
+
+  /**
+   * Lista dispositivos Bluetooth pareados (simulado para Web Bluetooth)
+   */
+  async listPairedDevices() {
+    if (!this.isBluetoothSupported()) {
+      throw new Error('Web Bluetooth não é suportado neste navegador');
+    }
+
+    try {
+      // Web Bluetooth API não permite listar dispositivos pareados
+      // Retorna uma lista vazia e instrui o usuário a conectar manualmente
+      console.log('Web Bluetooth API não permite listar dispositivos pareados automaticamente');
+      return [];
+    } catch (error) {
+      throw new Error('Erro ao listar dispositivos: ' + error.message);
+    }
+  }
+
+  /**
+   * Habilita o Bluetooth (não aplicável para Web Bluetooth)
+   */
+  async enableBluetooth() {
+    if (!this.isBluetoothSupported()) {
+      throw new Error('Web Bluetooth não é suportado neste navegador');
+    }
+
+    try {
+      // Web Bluetooth API não permite habilitar Bluetooth programaticamente
+      // O usuário deve habilitar manualmente nas configurações do dispositivo
+      const availability = await navigator.bluetooth.getAvailability();
+      if (!availability) {
+        throw new Error('Por favor, habilite o Bluetooth nas configurações do seu dispositivo');
+      }
+      return true;
+    } catch (error) {
+      throw new Error('Erro ao verificar Bluetooth: ' + error.message);
+    }
+  }
+
+  /**
    * Conecta à impressora Bluetooth
    */
   async connect() {

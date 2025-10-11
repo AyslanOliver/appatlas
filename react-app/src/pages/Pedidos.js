@@ -8,6 +8,24 @@ const Pedidos = () => {
     const [showBluetoothPrinter, setShowBluetoothPrinter] = useState(false);
     const [selectedPedido, setSelectedPedido] = useState(null);
 
+    // Função utilitária para converter valores para número
+    const toNumber = (value) => {
+        if (typeof value === 'number') return value;
+        if (typeof value === 'string') {
+            // Remove símbolos de moeda e espaços
+            const cleanValue = value.replace(/[R$\s]/g, '').replace(',', '.');
+            const num = parseFloat(cleanValue);
+            return isNaN(num) ? 0 : num;
+        }
+        return 0;
+    };
+
+    // Função utilitária para formatar moeda
+    const formatCurrency = (value) => {
+        const num = toNumber(value);
+        return num.toFixed(2);
+    };
+
     // Função para imprimir comanda da cozinha
     // eslint-disable-next-line no-unused-vars
     const imprimirComanda = (pedido) => {
