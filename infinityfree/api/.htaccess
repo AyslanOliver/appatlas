@@ -1,0 +1,28 @@
+# Configurações específicas para a API
+
+# Habilitar reescrita de URLs
+RewriteEngine On
+
+# Configurações de CORS para todos os arquivos da API
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+Header always set Access-Control-Max-Age "86400"
+
+# Definir tipo de conteúdo para arquivos PHP como JSON
+<Files "*.php">
+    Header set Content-Type "application/json; charset=utf-8"
+</Files>
+
+# Responder a requisições OPTIONS com status 200
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# Permitir acesso direto a arquivos PHP
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^(.*)$ $1 [L]
+
+# Se o arquivo não existir, tentar adicionar .php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^.]+)$ $1.php [L]

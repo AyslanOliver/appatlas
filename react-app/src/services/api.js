@@ -86,7 +86,7 @@ export const atualizarProduto = async (id, dados) => {
         const params = new URLSearchParams();
         Object.entries(dados || {}).forEach(([k, v]) => params.append(k, v));
         params.append('_method', 'PUT');
-        const response = await api.post(`/api/produtos?id=${id}`, params, {
+        const response = await api.post(`/api/produtos.php?id=${id}`, params, {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
         return response.data;
@@ -101,7 +101,7 @@ export const deletarProduto = async (id) => {
         // Workaround para InfinityFree: usar POST urlencoded com _method=DELETE e query parameter
         const params = new URLSearchParams();
         params.append('_method', 'DELETE');
-        const response = await api.post(`/api/produtos?id=${id}`, params, {
+        const response = await api.post(`/api/produtos.php?id=${id}`, params, {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
         return response.data;
@@ -124,7 +124,7 @@ export const getPedidos = async () => {
 
 export const getPedidoById = async (id) => {
     try {
-        const response = await api.get(`/api/pedidos?id=${id}`);
+        const response = await api.get(`/api/pedidos.php?id=${id}`);
         return response.data;
     } catch (error) {
         console.error('Erro ao buscar pedido:', error);
@@ -148,7 +148,7 @@ export const atualizarPedido = async (id, dados) => {
         const params = new URLSearchParams();
         Object.entries(dados || {}).forEach(([k, v]) => params.append(k, v));
         params.append('_method', 'PUT');
-        const response = await api.post(`/api/pedidos?id=${id}`, params, {
+        const response = await api.post(`/api/pedidos.php?id=${id}`, params, {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
         return response.data;
@@ -163,7 +163,7 @@ export const deletarPedido = async (id) => {
         // Workaround para InfinityFree: usar POST urlencoded com _method=DELETE e query parameter
         const params = new URLSearchParams();
         params.append('_method', 'DELETE');
-        const response = await api.post(`/api/pedidos?id=${id}`, params, {
+        const response = await api.post(`/api/pedidos.php?id=${id}`, params, {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
         return response.data;
@@ -179,7 +179,7 @@ export const deletarTodosPedidos = async () => {
         const params = new URLSearchParams();
         params.append('_method', 'DELETE');
         params.append('deleteAll', 'true');
-        const response = await api.post('/api/pedidos', params, {
+        const response = await api.post('/api/pedidos.php', params, {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
         return response.data;

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Manifest</title>
+    <link rel="manifest" href="./manifest.json">
+</head>
+<body>
+    <h1>Teste do Manifest</h1>
+    <p>Este é um teste para verificar se o manifest.json está funcionando corretamente.</p>
+    
+    <script>
+        // Verificar se o manifest foi carregado
+        if ('serviceWorker' in navigator) {
+            console.log('Service Worker suportado');
+        }
+        
+        // Verificar se o manifest está acessível
+        fetch('./manifest.json')
+            .then(response => {
+                if (response.ok) {
+                    console.log('Manifest carregado com sucesso');
+                    return response.json();
+                } else {
+                    console.error('Erro ao carregar manifest:', response.status);
+                }
+            })
+            .then(data => {
+                console.log('Dados do manifest:', data);
+                document.body.innerHTML += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            })
+            .catch(error => {
+                console.error('Erro ao acessar manifest:', error);
+                document.body.innerHTML += '<p style="color: red;">Erro: ' + error.message + '</p>';
+            });
+    </script>
+</body>
+</html>

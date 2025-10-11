@@ -1,170 +1,165 @@
 <?php
-/**
- * Arquivo de configuração para a API da Pizzaria Atlas
- */
-
 // Configurações do banco de dados
-define('DB_HOST', 'sql201.infinityfree.com');
-define('DB_NAME', 'if0_39733145_pizzaria');
-define('DB_USER', 'if0_39733145');
-define('DB_PASS', 'CeEJrC6eOE');
+$host = 'sql201.infinityfree.com';
+$dbname = 'if0_39733145_pizzaria';
+$username = 'if0_39733145';
+$password = 'CeEJrC6eOE';
 
-/**
- * Função para estabelecer conexão com o banco de dados
- */
+// Configurações de debug
+$debug = true;
+$logFile = __DIR__ . '/logs/error.log';
+
+// Configurar relatório de erros
+if ($debug) {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+} else {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+}
+
+// Função para conectar ao banco de dados
 function getConnection() {
+    global $host, $dbname, $username, $password;
+    
     try {
-        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-        $pdo = new PDO($dsn, DB_USER, DB_PASS, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ]);
+        $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         return $pdo;
     } catch (PDOException $e) {
         logError('Erro de conexão com banco de dados', ['error' => $e->getMessage()]);
-        throw new Exception('Erro de conexão com o banco de dados');
+        throw new Exception('Erro de conexão com banco de dados');
     }
 }
 
-/**
- * Função para definir cabeçalhos CORS
- */
+// Função para configurar headers CORS
 function setCorsHeaders() {
-    // Permitir origens específicas
-    $allowedOrigins = [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'https://pizzariaatlas.infinityfreeapp.com',
-        'https://your-domain.com'
-    ];
-    
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    if (in_array($origin, $allowedOrigins)) {
-        header("Access-Control-Allow-Origin: $origin");
-    } else {
-        header("Access-Control-Allow-Origin: *");
-    }
-    
-    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-    header("Access-Control-Allow-Credentials: true");
-    
-    // Responder a requisições OPTIONS (preflight)
-    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-        http_response_code(200);
-        exit();
-    }
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+    header('Access-Control-Max-Age: 86400');
+    header('Content-Type: application/json; charset=utf-8');
 }
 
-/**
- * Função para enviar resposta JSON
- */
+// Função para retornar resposta JSON
 function jsonResponse($data, $statusCode = 200) {
     http_response_code($statusCode);
-    header('Content-Type: application/json; charset=utf-8');
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-    exit();
+    exit;
 }
 
-/**
- * Função para registrar erros
- */
+// Função para log de erros
 function logError($message, $context = []) {
-    $logFile = __DIR__ . '/logs/error.log';
-    $logDir = dirname($logFile);
-    
-    // Criar diretório de logs se não existir
-    if (!is_dir($logDir)) {
-        mkdir($logDir, 0755, true);
-    }
+    global $logFile;
     
     $timestamp = date('Y-m-d H:i:s');
-    $contextStr = !empty($context) ? json_encode($context, JSON_UNESCAPED_UNICODE) : '';
     $logEntry = "[$timestamp] $message";
     
-    if ($contextStr) {
-        $logEntry .= " | Context: $contextStr";
+    if (!empty($context)) {
+        $logEntry .= ' - Context: ' . json_encode($context, JSON_UNESCAPED_UNICODE);
     }
     
     $logEntry .= PHP_EOL;
     
-    // Escrever no arquivo de log
-    file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
-    
-    // Também registrar no error_log do PHP para debug
-    error_log("Pizzaria Atlas API: $message" . ($contextStr ? " | $contextStr" : ""));
-}
-
-/**
- * Função para validar dados de entrada
- */
-function validateInput($data, $requiredFields = []) {
-    $errors = [];
-    
-    foreach ($requiredFields as $field) {
-        if (!isset($data[$field]) || empty(trim($data[$field]))) {
-            $errors[] = "Campo '$field' é obrigatório";
-        }
+    // Criar diretório de logs se não existir
+    $logDir = dirname($logFile);
+    if (!is_dir($logDir)) {
+        mkdir($logDir, 0755, true);
     }
     
-    return $errors;
+    file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
 }
 
-/**
- * Função para sanitizar dados
- */
+// Função para validar entrada
+function validateInput($data, $required = []) {
+    foreach ($required as $field) {
+        if (!isset($data[$field]) || empty($data[$field])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Função para sanitizar entrada
 function sanitizeInput($data) {
     if (is_array($data)) {
         return array_map('sanitizeInput', $data);
     }
-    
-    return htmlspecialchars(trim($data), ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars(strip_tags(trim($data)), ENT_QUOTES, 'UTF-8');
 }
 
-/**
- * Função para formatar preço
- */
+// Função para formatar preço
 function formatPrice($price) {
     return number_format((float)$price, 2, '.', '');
 }
 
-/**
- * Função para debug (apenas em desenvolvimento)
- */
+// Função para debug
 function debugLog($message, $data = null) {
-    if (defined('DEBUG_MODE') && DEBUG_MODE) {
-        $logFile = __DIR__ . '/logs/debug.log';
-        $logDir = dirname($logFile);
-        
-        if (!is_dir($logDir)) {
-            mkdir($logDir, 0755, true);
-        }
-        
-        $timestamp = date('Y-m-d H:i:s');
-        $logEntry = "[$timestamp] DEBUG: $message";
-        
-        if ($data !== null) {
-            $logEntry .= " | Data: " . json_encode($data, JSON_UNESCAPED_UNICODE);
-        }
-        
-        $logEntry .= PHP_EOL;
-        file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+    global $debug;
+    if ($debug) {
+        error_log("DEBUG: $message" . ($data ? ' - ' . json_encode($data) : ''));
     }
 }
 
-// Definir modo de debug (desabilitar em produção)
-define('DEBUG_MODE', false);
-
-// Configurar timezone
-date_default_timezone_set('America/Sao_Paulo');
-
-// Configurar exibição de erros (desabilitar em produção)
-if (DEBUG_MODE) {
-    ini_set('display_errors', 1);
-    ini_set('display_startup_errors', 1);
-    error_reporting(E_ALL);
-} else {
-    ini_set('display_errors', 0);
-    error_reporting(0);
+// Inicializar tabelas se não existirem
+function initializeTables() {
+    try {
+        $pdo = getConnection();
+        
+        // Criar tabela de pedidos
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS pedidos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                cliente VARCHAR(255) NOT NULL,
+                telefone VARCHAR(20),
+                endereco TEXT,
+                total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                status ENUM('pendente', 'preparo', 'entrega', 'entregue') DEFAULT 'pendente',
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        
+        // Criar tabela de itens do pedido
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS pedido_itens (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                pedido_id INT NOT NULL,
+                nome VARCHAR(255) NOT NULL,
+                quantidade INT NOT NULL DEFAULT 1,
+                preco DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        
+        // Criar tabela de produtos
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS produtos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(255) NOT NULL,
+                tipo VARCHAR(50) NOT NULL,
+                preco DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                descricao TEXT,
+                disponivel BOOLEAN DEFAULT TRUE,
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        
+        debugLog('Tabelas inicializadas com sucesso');
+        
+    } catch (Exception $e) {
+        logError('Erro ao inicializar tabelas', ['error' => $e->getMessage()]);
+        throw $e;
+    }
 }
+
+// Inicializar tabelas automaticamente
+try {
+    initializeTables();
+} catch (Exception $e) {
+    // Log do erro, mas não interrompe a execução
+    logError('Falha na inicialização automática das tabelas', ['error' => $e->getMessage()]);
+}
+?>
