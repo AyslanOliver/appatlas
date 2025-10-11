@@ -20,19 +20,23 @@ const Dashboard = () => {
     }, [pedidos]);
 
     const calculateStats = (pedidosData) => {
-        const hoje = new Date().toDateString();
-        const pedidosHoje = pedidosData.filter(pedido => 
-            new Date(pedido.data_pedido).toDateString() === hoje
-        );
+        const lista = Array.isArray(pedidosData) ? pedidosData : [];
+        const hojeStr = new Date().toDateString();
 
-        const pendentes = pedidosData.filter(p => p.status === 'pendente').length;
-        const preparo = pedidosData.filter(p => p.status === 'preparo').length;
-        const entrega = pedidosData.filter(p => p.status === 'entrega').length;
+        const pedidosHoje = lista.filter((pedido) => {
+            const data = pedido.data_pedido || pedido.criado_em;
+            if (!data) return false;
+            return new Date(data).toDateString() === hojeStr;
+        });
+
+        const pendentes = lista.filter(p => p.status === 'pendente').length;
+        const preparo = lista.filter(p => p.status === 'preparo').length;
+        const entrega = lista.filter(p => p.status === 'entrega').length;
         const entregues = pedidosHoje.filter(p => p.status === 'entregue').length;
 
         const vendasHoje = pedidosHoje
             .filter(p => p.status === 'entregue')
-            .reduce((total, pedido) => total + parseFloat(pedido.total || 0), 0);
+            .reduce((total, pedido) => total + (parseFloat(pedido.total) || 0), 0);
 
         const ticketMedio = entregues > 0 ? vendasHoje / entregues : 0;
 

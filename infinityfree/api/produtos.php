@@ -16,6 +16,14 @@ try {
         } elseif (isset($_POST['_method'])) {
             $method = strtoupper($_POST['_method']);
         }
+        // Se o corpo JSON vier vazio, usar dados de formulário
+        if (!$input && !empty($_POST)) {
+            $input = $_POST;
+        }
+        // Remover a chave de controle
+        if (is_array($input) && isset($input['_method'])) {
+            unset($input['_method']);
+        }
     }
     
     switch ($method) {
@@ -76,6 +84,9 @@ try {
             // Se não temos input ainda (requisição PUT direta), ler agora
             if (!$input) {
                 $input = json_decode(file_get_contents('php://input'), true);
+                if (!$input && !empty($_POST)) {
+                    $input = $_POST;
+                }
             }
             
             if (!$input) {

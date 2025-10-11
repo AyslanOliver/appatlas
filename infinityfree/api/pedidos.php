@@ -23,6 +23,14 @@ try {
         } elseif (isset($_POST['_method'])) {
             $method = strtoupper($_POST['_method']);
         }
+        // Se o corpo JSON vier vazio, usar dados de formulário
+        if (!$input && !empty($_POST)) {
+            $input = $_POST;
+        }
+        // Remover a chave de controle
+        if (is_array($input) && isset($input['_method'])) {
+            unset($input['_method']);
+        }
     }
     
     // Extrair ID da URL de forma mais robusta
@@ -168,6 +176,9 @@ try {
             // Se não temos input ainda (requisição PUT direta), ler agora
             if (!$input) {
                 $input = json_decode(file_get_contents('php://input'), true);
+                if (!$input && !empty($_POST)) {
+                    $input = $_POST;
+                }
             }
             
             if (!$input) {
@@ -188,23 +199,34 @@ try {
                 jsonResponse(['error' => 'Nenhum campo para atualizar'], 400);
             }
             
+            // Verificar se o pedido existe antes de atualizar
+            $checkStmt = $pdo->prepare("SELECT id FROM pedidos WHERE id = ?");
+            $checkStmt->execute([$pedidoId]);
+            if (!$checkStmt->fetchColumn()) {
+                jsonResponse(['error' => 'Pedido não encontrado'], 404);
+            }
+
             $values[] = $pedidoId;
             $sql = "UPDATE pedidos SET " . implode(', ', $fields) . " WHERE id = ?";
-            
+
             $stmt = $pdo->prepare($sql);
             $result = $stmt->execute($values);
-            
-            if ($result && $stmt->rowCount() > 0) {
-                jsonResponse(['message' => 'Pedido atualizado com sucesso']);
-            } else if ($stmt->rowCount() === 0) {
-                jsonResponse(['error' => 'Pedido não encontrado ou nenhuma alteração foi feita'], 404);
+
+            if ($result) {
+                $changed = $stmt->rowCount() > 0;
+                jsonResponse([
+                    'message' => $changed ? 'Pedido atualizado com sucesso' : 'Nenhuma alteração realizada',
+                    'changed' => $changed,
+                    'id' => $pedidoId
+                ]);
             } else {
                 jsonResponse(['error' => 'Erro ao atualizar pedido'], 500);
             }
             break;
             
         case 'DELETE':
-            $deleteAll = $_GET['deleteAll'] ?? false;
+            // aceitar deleteAll por GET ou POST quando usando method override
+            $deleteAll = $_GET['deleteAll'] ?? ($_POST['deleteAll'] ?? false);
             
             if ($deleteAll === 'true') {
                 // Deletar todos os pedidos

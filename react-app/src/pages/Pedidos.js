@@ -51,6 +51,21 @@ const Pedidos = () => {
     // Função para copiar mensagem do WhatsApp
     // eslint-disable-next-line no-unused-vars
     const copiarWhatsApp = (pedido) => {
+        // Utilitários para tratar números vindos como string (ex.: "12,50", "R$ 10")
+        const toNumber = (val) => {
+            if (val === null || val === undefined) return 0;
+            const s = String(val).trim().replace(/^R\$\s*/, '');
+            // Converte vírgula decimal para ponto quando não há ponto presente
+            const normalized = s.includes(',') && !s.includes('.') ? s.replace(',', '.') : s;
+            const num = parseFloat(normalized);
+            return Number.isFinite(num) ? num : 0;
+        };
+
+        const formatCurrency = (val) => {
+            const num = toNumber(val);
+            return num.toFixed(2);
+        };
+
         // Usar criadoEm ou data_pedido, dependendo de qual estiver disponível
         const dataPedido = pedido.criadoEm || pedido.data_pedido;
         let dataFormatada = 'Data não disponível';
@@ -87,12 +102,14 @@ const Pedidos = () => {
 
 🍽️ *ITENS:*
 ${pedido.itens ? pedido.itens.map(item => {
-    const preco = item.preco || item.preco_unitario || 0;
-    const subtotal = (item.quantidade || 1) * preco;
-    return `• ${item.produto_nome || item.nome} (${item.quantidade || 1}x)\n  R$ ${preco.toFixed(2)} cada - Subtotal: R$ ${subtotal.toFixed(2)}`;
+    const precoRaw = item.preco ?? item.preco_unitario ?? item.precoUnitario ?? 0;
+    const precoNum = toNumber(precoRaw);
+    const quantidadeNum = toNumber(item.quantidade) || 1;
+    const subtotalNum = quantidadeNum * precoNum;
+    return `• ${item.produto_nome || item.nome} (${quantidadeNum}x)\n  R$ ${precoNum.toFixed(2)} cada - Subtotal: R$ ${subtotalNum.toFixed(2)}`;
 }).join('\n') : 'Nenhum item'}
 
-💰 *Total:* R$ ${parseFloat(pedido.total || 0).toFixed(2)}
+💰 *Total:* R$ ${formatCurrency(pedido.total || 0)}
 
 Obrigado pela preferência! 🙏`;
 

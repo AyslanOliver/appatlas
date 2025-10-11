@@ -82,8 +82,13 @@ export const criarProduto = async (dados) => {
 
 export const atualizarProduto = async (id, dados) => {
     try {
-        // Workaround para InfinityFree: usar POST com _method=PUT
-        const response = await api.post(`/api/produtos/${id}`, { ...dados, _method: 'PUT' });
+        // Workaround para InfinityFree: usar POST urlencoded com _method=PUT e query parameter
+        const params = new URLSearchParams();
+        Object.entries(dados || {}).forEach(([k, v]) => params.append(k, v));
+        params.append('_method', 'PUT');
+        const response = await api.post(`/api/produtos?id=${id}`, params, {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
         return response.data;
     } catch (error) {
         console.error('Erro ao atualizar produto:', error);
@@ -93,8 +98,12 @@ export const atualizarProduto = async (id, dados) => {
 
 export const deletarProduto = async (id) => {
     try {
-        // Workaround para InfinityFree: usar POST com _method=DELETE
-        const response = await api.post(`/api/produtos/${id}`, { _method: 'DELETE' });
+        // Workaround para InfinityFree: usar POST urlencoded com _method=DELETE e query parameter
+        const params = new URLSearchParams();
+        params.append('_method', 'DELETE');
+        const response = await api.post(`/api/produtos?id=${id}`, params, {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
         return response.data;
     } catch (error) {
         console.error('Erro ao deletar produto:', error);
@@ -115,7 +124,7 @@ export const getPedidos = async () => {
 
 export const getPedidoById = async (id) => {
     try {
-        const response = await api.get(`/api/pedidos/${id}`);
+        const response = await api.get(`/api/pedidos?id=${id}`);
         return response.data;
     } catch (error) {
         console.error('Erro ao buscar pedido:', error);
@@ -135,8 +144,13 @@ export const criarPedido = async (pedido) => {
 
 export const atualizarPedido = async (id, dados) => {
     try {
-        // Workaround para InfinityFree: usar POST com _method=PUT
-        const response = await api.post(`/api/pedidos/${id}`, { ...dados, _method: 'PUT' });
+        // Workaround para InfinityFree: usar POST urlencoded com _method=PUT e query parameter
+        const params = new URLSearchParams();
+        Object.entries(dados || {}).forEach(([k, v]) => params.append(k, v));
+        params.append('_method', 'PUT');
+        const response = await api.post(`/api/pedidos?id=${id}`, params, {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
         return response.data;
     } catch (error) {
         console.error('Erro ao atualizar pedido:', error);
@@ -146,8 +160,12 @@ export const atualizarPedido = async (id, dados) => {
 
 export const deletarPedido = async (id) => {
     try {
-        // Workaround para InfinityFree: usar POST com _method=DELETE
-        const response = await api.post(`/api/pedidos/${id}`, { _method: 'DELETE' });
+        // Workaround para InfinityFree: usar POST urlencoded com _method=DELETE e query parameter
+        const params = new URLSearchParams();
+        params.append('_method', 'DELETE');
+        const response = await api.post(`/api/pedidos?id=${id}`, params, {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
         return response.data;
     } catch (error) {
         console.error('Erro ao deletar pedido:', error);
@@ -157,8 +175,13 @@ export const deletarPedido = async (id) => {
 
 export const deletarTodosPedidos = async () => {
     try {
-        // Workaround para InfinityFree: usar POST com _method=DELETE
-        const response = await api.post('/api/pedidos', { _method: 'DELETE', deleteAll: 'true' });
+        // Workaround para InfinityFree: usar POST urlencoded com _method=DELETE
+        const params = new URLSearchParams();
+        params.append('_method', 'DELETE');
+        params.append('deleteAll', 'true');
+        const response = await api.post('/api/pedidos', params, {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
         return response.data;
     } catch (error) {
         console.error('Erro ao deletar todos os pedidos:', error);
